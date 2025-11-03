@@ -1,0 +1,3077 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendance & Location Dashboard — Professional UI</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg: #f4f7fb;
+            --panel: #ffffff;
+            --muted: #6b7280;
+            --accent: #0e588c;
+            --accent2: #1565c0;
+            --text: #0b1220;
+            --success: #16a34a;
+            --warn: #f59e0b;
+            --danger: #ef4444;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background: var(--panel);
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(14, 88, 140, 0.06);
+            flex: 1;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        h1 {
+            color: var(--accent);
+            font-size: 24px;
+        }
+
+        .meta {
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .instructions {
+            background: #f9fafb;
+            padding: 16px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-bottom: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            position: relative;
+            align-items: flex-start;
+        }
+
+        .instructions::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 4px;
+            height: 100%;
+            background-color: #3b82f6;
+            border-top-left-radius: 8px;
+            border-bottom-left-radius: 8px;
+        }
+
+        .instructions h3 {
+            flex-basis: 100%;
+            color: #1e3a8a;
+            font-weight: 700;
+            font-size: 18px;
+            margin: 0 0 10px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .instructions ul {
+            flex: 1;
+            min-width: 40%;
+            margin: 0;
+            padding-left: 20px;
+            list-style: disc;
+            color: #374151;
+            font-size: 14px;
+            line-height: 1.8;
+            padding-right: 20px;
+        }
+
+
+        .time-rules {
+            flex: 1;
+            min-width: 40%;
+            padding: 0 0 0 20px;
+            position: relative;
+        }
+
+        .time-rules::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 1px;
+            background-color: #e5e7eb;
+        }
+
+        .time-rules h4 {
+            color: #1e3a8a;
+            margin-bottom: 8px;
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        .time-rules p {
+            font-size: 14px;
+            color: #374151;
+            margin-bottom: 5px;
+        }
+
+        @media (max-width: 768px) {
+            .instructions {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .instructions h3 {
+                padding-bottom: 0;
+                border-bottom: none;
+                margin-bottom: 0;
+            }
+            .instructions ul {
+                margin-bottom: 15px;
+                padding-right: 0;
+            }
+            .time-rules {
+                padding: 15px 0 0 0;
+                border-top: 1px solid #e5e7eb;
+            }
+            .time-rules::before {
+                display: none;
+            }
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+            align-items: center;
+        }
+
+        .controls input, .controls select, .controls button {
+            padding: 10px 12px;
+            border-radius: 8px;
+            border: 1px solid #e6eef7;
+            font-size: 14px;
+            color: var(--text);
+            flex: 1;
+            min-width: 140px;
+        }
+
+        .btn {
+            background: linear-gradient(90deg, var(--accent), var(--accent2));
+            color: white !important;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            white-space: nowrap;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+
+        .btn-ghost {
+            background: white;
+            border: 1px solid #e6eef7;
+            color: var(--accent);
+            padding: 10px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.3s ease;
+        }
+
+        .btn-ghost:hover {
+            background: #f0f5fb;
+        }
+
+        .btn-danger {
+            background: linear-gradient(90deg, var(--danger), #dc2626);
+            color: white !important;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: nowrap;
+            margin-left: auto;
+        }
+
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .card {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 5px solid var(--accent);
+            box-shadow: 0 6px 18px rgba(14, 88, 140, 0.04);
+            transition: all 0.2s ease;
+        }
+
+        .card.active {
+            border-left: 5px solid var(--success);
+            background: #f0f9ff;
+        }
+
+        .card p {
+            margin: 0;
+            color: var(--muted);
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .card h3 {
+            margin: 8px 0 0;
+            color: var(--accent);
+            font-size: 24px;
+        }
+
+        .chartRow {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .chartBox {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 6px 18px rgba(14, 88, 140, 0.03);
+            min-height: 350px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chart-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: var(--accent);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chart-toggle {
+            background: none;
+            border: none;
+            color: var(--accent);
+            cursor: pointer;
+            font-size: 16px;
+            padding: 5px;
+            border-radius: 4px;
+        }
+
+        .chart-toggle:hover {
+            background: #f0f5fb;
+        }
+
+        .chart-container {
+            flex: 1;
+            position: relative;
+        }
+
+        canvas {
+            width: 100% !important;
+            height: 100% !important;
+            max-height: 300px;
+        }
+
+        .tabs {
+            margin-top: 20px;
+        }
+
+        .tab-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .tab-button {
+            padding: 10px 15px;
+            border-radius: 8px;
+            border: none;
+            background: #f0f5fb;
+            color: var(--muted);
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            white-space: nowrap;
+            transition: all 0.3s ease;
+        }
+
+        .tab-button.active {
+            background: linear-gradient(90deg, var(--accent), var(--accent2));
+            color: white;
+        }
+
+        .tab-content {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #eef5fb;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #f1f6fb;
+            text-align: left;
+            vertical-align: middle;
+        }
+
+        th {
+            background: linear-gradient(90deg, var(--accent), var(--accent2));
+            color: white;
+            font-weight: 700;
+            position: sticky;
+            top: 0;
+            white-space: nowrap;
+        }
+
+        tr:nth-child(even) {
+            background: #fbfdff;
+        }
+
+        tr:hover {
+            background: #f0f7ff;
+            transition: background 0.2s ease;
+        }
+
+        .status-on {
+            background: #e8f5e9;
+            color: var(--success);
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-weight: 700;
+            display: inline-block;
+            min-width: 80px;
+            text-align: center;
+        }
+
+        .status-late {
+            background: #fff8e1;
+            color: var(--warn);
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-weight: 700;
+            display: inline-block;
+            min-width: 80px;
+            text-align: center;
+        }
+
+        .status-early {
+            background: #fff1f0;
+            color: var(--danger);
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-weight: 700;
+            display: inline-block;
+            min-width: 80px;
+            text-align: center;
+        }
+
+        .status-absent {
+            background: #f3f4f6;
+            color: #64748b;
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-weight: 700;
+            display: inline-block;
+            min-width: 80px;
+            text-align: center;
+        }
+
+        .status-holiday {
+            background: #e3f2fd;
+            color: #1565c0;
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-weight: 700;
+            display: inline-block;
+            min-width: 80px;
+            text-align: center;
+        }
+
+        .link {
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .link:hover {
+            text-decoration: underline;
+        }
+
+        .table-container {
+            max-height: 500px;
+            overflow-y: auto;
+            border-radius: 8px;
+            border: 1px solid #eef5fb;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--muted);
+        }
+
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 16px;
+            color: #e0e7ff;
+        }
+
+        .summary-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .summary-stat {
+            background: white;
+            padding: 18px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .summary-stat:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .summary-stat.active {
+            border: 2px solid var(--accent);
+            background: #f0f9ff;
+        }
+
+        .summary-stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 8px;
+        }
+
+        .summary-stat-label {
+            font-size: 14px;
+            color: var(--muted);
+            font-weight: 600;
+        }
+
+        .summary-stat-percent {
+            font-size: 16px;
+            font-weight: 600;
+            margin-top: 8px;
+        }
+
+        .percent-positive {
+            color: var(--success);
+        }
+
+        .percent-negative {
+            color: var(--danger);
+        }
+
+        .top-performers {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            margin-bottom: 25px;
+        }
+
+        .top-performers h3 {
+            margin-top: 0;
+            color: var(--accent);
+            font-size: 18px;
+            border-bottom: 1px solid #eef5fb;
+            padding-bottom: 12px;
+            margin-bottom: 15px;
+        }
+
+        .performers-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .performer-card {
+            background: #f8fafc;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid var(--success);
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .performer-rank {
+            display: inline-block;
+            background: var(--success);
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 32px;
+            font-weight: bold;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        .performer-name {
+            font-weight: 600;
+            color: var(--accent);
+            margin-bottom: 8px;
+            font-size: 16px;
+        }
+
+        .performer-stats {
+            font-size: 13px;
+            color: var(--muted);
+            margin-bottom: 5px;
+        }
+
+        .performer-accuracy {
+            font-weight: 700;
+            color: var(--success);
+            margin-top: 8px;
+            font-size: 14px;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 30px;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(14, 88, 140, 0.2);
+            border-radius: 50%;
+            border-top-color: var(--accent);
+            animation: spin 1s ease-in-out infinite;
+            margin-bottom: 15px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .scroll-top {
+            position: fixed;
+            bottom: 25px;
+            right: 25px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 55px;
+            height: 55px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(14, 88, 140, 0.3);
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            z-index: 1000;
+            font-size: 20px;
+        }
+
+        .scroll-top.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .scroll-top:hover {
+            background: var(--accent2);
+            transform: translateY(-3px);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 20px;
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: var(--muted);
+            cursor: pointer;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: 8px;
+            border: 1px solid #e6eef7;
+            font-size: 14px;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+
+        .employee-actions {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .excel-actions {
+            background: #f0f9ff;
+            padding: 15px;
+            border-radius: 8px;
+            border: 2px dashed #bae6fd;
+            margin-bottom: 20px;
+        }
+
+        .excel-actions h4 {
+            color: var(--accent);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .excel-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .file-input-wrapper input[type="file"] {
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .file-input-label {
+            display: block;
+            padding: 10px 15px;
+            background: white;
+            border: 2px dashed #e6eef7;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .file-input-label:hover {
+            border-color: var(--accent);
+            background: #f0f9ff;
+        }
+
+        .file-input-label i {
+            margin-right: 8px;
+            color: var(--accent);
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--success);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 3000;
+            font-weight: 600;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            max-width: 400px;
+        }
+
+        .notification.error {
+            background: var(--danger);
+        }
+
+        .employee-database-section {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+        
+        .employee-actions-panel {
+            flex: 1;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 6px 18px rgba(14, 88, 140, 0.03);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .employee-actions-panel h3 {
+            color: var(--accent);
+            font-size: 18px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .employee-actions-panel p {
+            color: var(--muted);
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+        
+        .action-buttons-vertical {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .employee-table-panel {
+            flex: 2;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 6px 18px rgba(14, 88, 140, 0.03);
+        }
+        
+        .footer {
+            background: var(--accent);
+            color: white;
+            text-align: center;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 0 0 12px 12px;
+        }
+        
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .footer p {
+            margin: 0;
+            font-size: 14px;
+        }
+        
+        .developer-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+                margin: 10px;
+            }
+            
+            header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .controls input, .controls select, .controls button {
+                width: 100%;
+            }
+            
+            .action-buttons {
+                margin-left: 0;
+                width: 100%;
+                justify-content: stretch;
+            }
+            
+            .action-buttons button {
+                flex: 1;
+            }
+            
+            .cards {
+                grid-template-columns: 1fr 1fr;
+            }
+            
+            .chartRow {
+                grid-template-columns: 1fr;
+            }
+            
+            .tab-buttons {
+                flex-direction: column;
+            }
+            
+            .table-container {
+                overflow-x: auto;
+            }
+            
+            table {
+                min-width: 800px;
+            }
+            
+            .summary-stats {
+                grid-template-columns: 1fr 1fr;
+            }
+            
+            .performers-list {
+                grid-template-columns: 1fr;
+            }
+            
+            .excel-buttons {
+                flex-direction: column;
+            }
+            
+            .employee-database-section {
+                flex-direction: column;
+            }
+            
+            .footer-content {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .cards {
+                grid-template-columns: 1fr;
+            }
+            
+            .summary-stats {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 20px;
+            }
+            
+            .card h3 {
+                font-size: 22px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div>
+                <h1>Attendance & Location Dashboard</h1>
+            </div>
+            <div class="meta">Generated: <span id="generationDate">-</span></div>
+        </header>
+
+        <div class="instructions">
+            <h3><i class="fas fa-info-circle"></i> Instructions & Time Rules</h3>
+            <ul>
+                <li><strong>File Upload:</strong> Export WhatsApp chat as .txt file (Android/iPhone)</li>
+                <li><strong>Date Range:</strong> Select start date only for single day, or range for multiple days</li>
+                <li><strong>Process:</strong> Click Process button after file upload</li>
+                <li><strong>Apply Filter:</strong> Use filters to view specific data</li>
+                <li><strong>Export:</strong> Download Excel with detailed reports</li>
+            </ul>
+            
+            <div class="time-rules">
+                <h4><i class="fas fa-clock"></i> Attendance Time Rules</h4>
+                <p><strong>Late Time:</strong> After 8:20 AM</p>
+                <p><strong>Early Leave:</strong> Before 2:22 PM</p>
+                <p><strong>Friday Early:</strong> Before 12:00 PM</p>
+                <p><strong>On Time:</strong> Before 8:20 AM check-in and after 2:22 PM check-out</p>
+            </div>
+        </div>
+
+        <div class="controls">
+            <div class="file-input-wrapper">
+                <input id="chatFile" type="file" accept=".txt" />
+                <label class="file-input-label" for="chatFile">
+                    <i class="fas fa-upload"></i> Upload WhatsApp .txt File
+                </label>
+            </div>
+            <label>From <input id="startDate" type="date" /></label>
+            <label>To <input id="endDate" type="date" /></label>
+            <select id="statusFilter">
+                <option value="">All Status</option>
+                <option>On Time</option>
+                <option>Late</option>
+                <option>Early</option>
+                <option>Absent</option>
+                <option>Holiday (Sun)</option>
+            </select>
+            <input id="searchBox" type="text" placeholder="Search name / phone / place" />
+            <div class="action-buttons">
+                <button id="processBtn" class="btn">Process</button>
+                <button id="applyBtn" class="btn-ghost">Apply Filter</button>
+                <button id="exportBtn" class="btn-ghost">Export Excel</button>
+            </div>
+        </div>
+
+        <div class="loading" id="loadingIndicator">
+            <div class="loading-spinner"></div>
+            <p>Processing data, please wait...</p>
+        </div>
+
+        <div class="cards">
+            <div class="card" data-filter="all">
+                <p>Total Unique People</p>
+                <h3 id="totalPeople">0</h3>
+            </div>
+            <div class="card" data-filter="present">
+                <p>Total Present Days</p>
+                <h3 id="totalPresent">0</h3>
+            </div>
+            <div class="card" data-filter="onTime">
+                <p>On Time Days</p>
+                <h3 id="totalOnTime">0</h3>
+            </div>
+            <div class="card" data-filter="absent">
+                <p>Absent Days</p>
+                <h3 id="totalAbsent">0</h3>
+            </div>
+        </div>
+
+        <div class="top-performers" id="topPerformers" style="display: none;">
+            <h3><i class="fas fa-trophy"></i> Top 5 Best Performers</h3>
+            <div class="performers-list" id="performersList">
+                <!-- Top performers will be populated here -->
+            </div>
+        </div>
+
+        <div class="chartRow">
+            <div class="chartBox">
+                <div class="chart-title">
+                    Attendance Distribution (Click cards to filter)
+                    <button class="chart-toggle" id="toggleStackedChart">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+                <div class="chart-container">
+                    <canvas id="stackedChart"></canvas>
+                </div>
+            </div>
+            <div class="chartBox">
+                <div class="chart-title">
+                    Attendance Trends (All Dates)
+                    <button class="chart-toggle" id="toggleTrendChart">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+                <div class="chart-container">
+                    <canvas id="trendChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <div class="tab-buttons">
+                <button class="tab-button active" data-tab="dailySummaryTab">Summary</button>
+                <button class="tab-button" data-tab="detailedTab">Detailed Attendance</button>
+                <button class="tab-button" data-tab="locationsTab">Locations</button>
+                <button class="tab-button" data-tab="employeeTab">Employee Database</button>
+            </div>
+
+            <div class="tab-content">
+                <div id="dailySummaryTab" class="tab-pane">
+                    <div class="summary-stats" id="summaryStats">
+                        <!-- Summary statistics will be populated here -->
+                    </div>
+                    <div class="table-container">
+                        <table id="dailySummaryTable">
+                            <thead>
+                                <tr>
+                                    <th>Name/Phone</th>
+                                    <th>Total Days</th>
+                                    <th>Present</th>
+                                    <th>On Time</th>
+                                    <th>Late</th>
+                                    <th>Early</th>
+                                    <th>Absent</th>
+                                    <th>Sunday</th>
+                                    <th>Accuracy %</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td colspan="9" class="empty-state">
+                                        <i class="fas fa-chart-bar"></i>
+                                        <p>No data yet. Upload .txt and click Process.</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="detailedTab" class="tab-pane" style="display:none">
+                    <div class="table-container">
+                        <table id="attendanceTable">
+                            <thead>
+                                <tr>
+                                    <th>Name/Phone</th>
+                                    <th>Designation</th>
+                                    <th>Posting Office</th>
+                                    <th>Date</th>
+                                    <th>Check-In</th>
+                                    <th>Check-Out</th>
+                                    <th>Status</th>
+                                    <th>Location</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td colspan="8" class="empty-state">
+                                        <i class="fas fa-users"></i>
+                                        <p>No attendance data available.</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="locationsTab" class="tab-pane" style="display:none">
+                    <div class="table-container">
+                        <table id="locationsTable">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Date</th>
+                                    <th>Time</th>
+                                    <th>Sender</th>
+                                    <th>Place</th>
+                                    <th>Link</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td colspan="6" class="empty-state">
+                                        <i class="fas fa-map-marker-alt"></i>
+                                        <p>No location data available.</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="employeeTab" class="tab-pane" style="display:none">
+                    <div class="excel-actions">
+                        <h4><i class="fas fa-file-excel"></i> Excel Import/Export</h4>
+                        <div class="excel-buttons">
+                            <button id="downloadTemplateBtn" class="btn">
+                                <i class="fas fa-download"></i> Download Excel Template
+                            </button>
+                            <div class="file-input-wrapper">
+                                <input type="file" id="excelFile" accept=".xlsx, .xls" />
+                                <label class="file-input-label" for="excelFile">
+                                    <i class="fas fa-upload"></i> Import from Excel
+                                </label>
+                            </div>
+                        </div>
+                        <p style="margin-top: 10px; font-size: 12px; color: var(--muted);">
+                            Download template, fill employee data, then upload to import all employees at once.
+                        </p>
+                    </div>
+
+                    <div class="employee-database-section">
+                        <div class="employee-actions-panel">
+                            <h3><i class="fas fa-users"></i> Employee Management</h3>
+                            <p>Add, edit, or delete employees. Sync with attendance data to update names and details.</p>
+                            
+                            <div class="action-buttons-vertical">
+                                <button id="addEmployeeBtn" class="btn">
+                                    <i class="fas fa-plus"></i> Add Employee
+                                </button>
+                                <button id="syncEmployeesBtn" class="btn-ghost">
+                                    <i class="fas fa-sync-alt"></i> Sync with Attendance
+                                </button>
+                                <button id="deleteAllEmployeesBtn" class="btn-danger">
+                                    <i class="fas fa-trash"></i> Delete All Employees
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="employee-table-panel">
+                            <h3><i class="fas fa-table"></i> Employee Database</h3>
+                            <div class="table-container">
+                                <table id="employeeTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Emp Name</th>
+                                            <th>Designation</th>
+                                            <th>Posting Office</th>
+                                            <th>Contact #</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="employeeTableBody">
+                                        <!-- Employee data will be populated here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <div class="footer-content">
+            <p>© 2025 Attendance & Location Dashboard</p>
+            <div class="developer-info">
+                <i class="fas fa-code"></i>
+                <p>Developed and designed by Rajesh Kumar +92.332.2463588</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Employee Modal -->
+    <div class="modal" id="employeeModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="employeeModalTitle">Add Employee</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <form id="employeeForm">
+                <input type="hidden" id="employeeId">
+                <div class="form-group">
+                    <label for="empName">Employee Name</label>
+                    <input type="text" id="empName" required>
+                </div>
+                <div class="form-group">
+                    <label for="empDesignation">Designation</label>
+                    <input type="text" id="empDesignation" required>
+                </div>
+                <div class="form-group">
+                    <label for="empPosting">Posting Office</label>
+                    <input type="text" id="empPosting" required>
+                </div>
+                <div class="form-group">
+                    <label for="empContact">Contact Number</label>
+                    <input type="text" id="empContact" placeholder="e.g., 03001234567" required>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn-ghost" id="cancelEmployeeBtn">Cancel</button>
+                    <button type="submit" class="btn">Save Employee</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <button class="scroll-top" id="scrollTopBtn" title="Go to top">
+        <i class="fas fa-arrow-up"></i>
+    </button>
+
+    <script>
+        // Configuration
+        const LATE_TIME_MINS = 8 * 60 + 20; // 8:20 AM
+        const EARLY_TIME_MINS = 14 * 60 + 22; // 2:22 PM
+        const FRIDAY_EARLY_TIME_MINS = 12 * 60; // 12:00 PM for Fridays
+
+        // Employee Database - will be loaded from localStorage
+        let employeeDatabase = [];
+        let parsedMessages = [];
+        let perPerson = {};
+        let locationItems = [];
+        let filteredPerPerson = {};
+        let stackedChart, trendChart;
+        let chartVisibility = {
+            stacked: true,
+            trend: true
+        };
+        let activeFilter = 'all';
+
+        // Initialize on page load
+        window.addEventListener('load', function() {
+            window.scrollTo(0, 0);
+            
+            // Set default dates to today
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('startDate').value = today;
+            document.getElementById('endDate').value = today;
+            
+            // Load employee database from localStorage
+            loadEmployeeDatabase();
+            
+            // Initialize empty employee database
+            renderEmployeeDatabase();
+            
+            // Setup modal handlers
+            setupModalHandlers();
+            
+            // Setup Excel handlers
+            setupExcelHandlers();
+            
+            // Setup delete all button
+            document.getElementById('deleteAllEmployeesBtn').addEventListener('click', deleteAllEmployees);
+        });
+
+        // Load employee database from localStorage
+        function loadEmployeeDatabase() {
+            const saved = localStorage.getItem('employeeDatabase');
+            if (saved) {
+                employeeDatabase = JSON.parse(saved);
+            }
+        }
+
+        // Save employee database to localStorage
+        function saveEmployeeDatabase() {
+            localStorage.setItem('employeeDatabase', JSON.stringify(employeeDatabase));
+        }
+
+        // Setup modal handlers
+        function setupModalHandlers() {
+            const modal = document.getElementById('employeeModal');
+            const addBtn = document.getElementById('addEmployeeBtn');
+            const closeBtn = document.querySelector('.close-modal');
+            const cancelBtn = document.getElementById('cancelEmployeeBtn');
+            const form = document.getElementById('employeeForm');
+            const syncBtn = document.getElementById('syncEmployeesBtn');
+
+            addBtn.addEventListener('click', () => openEmployeeModal());
+            closeBtn.addEventListener('click', () => closeEmployeeModal());
+            cancelBtn.addEventListener('click', () => closeEmployeeModal());
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                saveEmployee();
+            });
+            syncBtn.addEventListener('click', () => syncEmployeesWithAttendance());
+
+            // Close modal when clicking outside
+            window.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    closeEmployeeModal();
+                }
+            });
+        }
+
+        // Setup Excel handlers
+        function setupExcelHandlers() {
+            const downloadBtn = document.getElementById('downloadTemplateBtn');
+            const excelFile = document.getElementById('excelFile');
+
+            downloadBtn.addEventListener('click', downloadExcelTemplate);
+            excelFile.addEventListener('change', handleExcelImport);
+        }
+
+        // Download Excel Template
+        function downloadExcelTemplate() {
+            // Create template data
+            const templateData = [
+                ['Employee Name', 'Designation', 'Posting Office', 'Contact Number'],
+                ['Dr. Nargis Lashari', 'Medical Officer', 'RHC Gambat', '03001234567'],
+                ['Dr. Ali Ahmed', 'Dental Surgeon', 'BHU Sultanabad', '03119876543'],
+                ['Dr. Sara Khan', 'Women Medical Officer', 'RHC Khipro', '03211234567'],
+                ['NOTE:', 'Fill all columns', 'No empty rows between data', 'Contact must be unique'],
+                ['IMPORTANT:', 'First row is header', 'Start data from row 2', 'Save as Excel file']
+            ];
+
+            // Create workbook
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.aoa_to_sheet(templateData);
+
+            // Set column widths
+            const colWidths = [
+                { wch: 20 }, // Employee Name
+                { wch: 20 }, // Designation
+                { wch: 20 }, // Posting Office
+                { wch: 15 }  // Contact Number
+            ];
+            ws['!cols'] = colWidths;
+
+            // Add worksheet to workbook
+            XLSX.utils.book_append_sheet(wb, ws, 'Employee Template');
+
+            // Download file
+            XLSX.writeFile(wb, 'Employee_Data_Template.xlsx');
+            showNotification('Excel template downloaded successfully!');
+        }
+
+        // Handle Excel Import
+        function handleExcelImport(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    
+                    // Get first worksheet
+                    const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+                    // Process data (skip header row)
+                    const importedEmployees = [];
+                    let successCount = 0;
+                    let errorCount = 0;
+
+                    for (let i = 1; i < jsonData.length; i++) {
+                        const row = jsonData[i];
+                        if (!row || row.length < 4) continue;
+
+                        const name = (row[0] || '').toString().trim();
+                        const designation = (row[1] || '').toString().trim();
+                        const posting = (row[2] || '').toString().trim();
+                        let contact = (row[3] || '').toString().trim();
+
+                        // Validate row
+                        if (!name || !designation || !posting || !contact) {
+                            errorCount++;
+                            continue;
+                        }
+
+                        // Format contact number (remove spaces, dashes, etc.)
+                        contact = contact.replace(/[\s\-\(\)]/g, '');
+
+                        // Check for duplicate contact
+                        const isDuplicate = employeeDatabase.some(emp => emp.contact === contact) || 
+                                           importedEmployees.some(emp => emp.contact === contact);
+
+                        if (isDuplicate) {
+                            errorCount++;
+                            continue;
+                        }
+
+                        // Add to imported employees
+                        importedEmployees.push({
+                            id: Date.now().toString() + i,
+                            name,
+                            designation,
+                            posting,
+                            contact
+                        });
+
+                        successCount++;
+                    }
+
+                    // Add imported employees to database
+                    employeeDatabase.push(...importedEmployees);
+                    saveEmployeeDatabase();
+                    renderEmployeeDatabase();
+
+                    // Clear file input
+                    event.target.value = '';
+
+                    // Show results
+                    if (successCount > 0) {
+                        showNotification(`Successfully imported ${successCount} employees! ${errorCount > 0 ? `${errorCount} rows skipped due to errors.` : ''}`);
+                        
+                        // Auto-sync with attendance if data exists
+                        if (Object.keys(perPerson).length > 0) {
+                            updateEmployeeDetailsInDashboard();
+                            applyFilterAndRender();
+                        }
+                    } else {
+                        showNotification('No valid employees found in the Excel file.', 'error');
+                    }
+
+                } catch (error) {
+                    console.error('Error importing Excel:', error);
+                    showNotification('Error importing Excel file. Please check the format.', 'error');
+                    event.target.value = '';
+                }
+            };
+
+            reader.onerror = function() {
+                showNotification('Error reading Excel file.', 'error');
+                event.target.value = '';
+            };
+
+            reader.readAsArrayBuffer(file);
+        }
+
+        // Delete all employees
+        function deleteAllEmployees() {
+            if (confirm('Are you sure you want to delete ALL employees? This action cannot be undone.')) {
+                employeeDatabase = [];
+                saveEmployeeDatabase();
+                renderEmployeeDatabase();
+                
+                // Update dashboard if data exists
+                if (Object.keys(perPerson).length > 0) {
+                    updateEmployeeDetailsInDashboard();
+                    applyFilterAndRender();
+                }
+                
+                showNotification('All employees deleted successfully!');
+            }
+        }
+
+        // Open employee modal
+        function openEmployeeModal(employee = null) {
+            const modal = document.getElementById('employeeModal');
+            const title = document.getElementById('employeeModalTitle');
+            const form = document.getElementById('employeeForm');
+            
+            if (employee) {
+                // Edit mode
+                title.textContent = 'Edit Employee';
+                document.getElementById('employeeId').value = employee.id;
+                document.getElementById('empName').value = employee.name;
+                document.getElementById('empDesignation').value = employee.designation;
+                document.getElementById('empPosting').value = employee.posting;
+                document.getElementById('empContact').value = employee.contact;
+            } else {
+                // Add mode
+                title.textContent = 'Add Employee';
+                form.reset();
+                document.getElementById('employeeId').value = '';
+            }
+            
+            modal.style.display = 'flex';
+        }
+
+        // Close employee modal
+        function closeEmployeeModal() {
+            const modal = document.getElementById('employeeModal');
+            const form = document.getElementById('employeeForm');
+            
+            modal.style.display = 'none';
+            form.reset();
+            document.getElementById('employeeId').value = '';
+        }
+
+        // Save employee
+        function saveEmployee() {
+            const id = document.getElementById('employeeId').value;
+            const name = document.getElementById('empName').value.trim();
+            const designation = document.getElementById('empDesignation').value.trim();
+            const posting = document.getElementById('empPosting').value.trim();
+            let contact = document.getElementById('empContact').value.trim();
+
+            // Format contact number
+            contact = contact.replace(/[\s\-\(\)]/g, '');
+
+            // Validation
+            if (!name || !designation || !posting || !contact) {
+                alert('Please fill all fields');
+                return;
+            }
+
+            // Check for duplicate contact number (edit mode mein current employee ko exclude karein)
+            const isDuplicate = employeeDatabase.some(emp => {
+                if (emp.id === id) return false; // Same employee in edit mode
+                return emp.contact === contact;
+            });
+
+            if (isDuplicate) {
+                alert('Employee with this contact number already exists!');
+                return;
+            }
+
+            let oldContact = '';
+            if (id) {
+                // Find old contact for updating attendance data
+                const oldEmp = employeeDatabase.find(emp => emp.id === id);
+                if (oldEmp) oldContact = oldEmp.contact;
+            }
+
+            if (id) {
+                // Update existing employee
+                const index = employeeDatabase.findIndex(emp => emp.id === id);
+                if (index !== -1) {
+                    employeeDatabase[index] = {
+                        id,
+                        name,
+                        designation,
+                        posting,
+                        contact
+                    };
+                }
+            } else {
+                // Add new employee
+                const newEmployee = {
+                    id: Date.now().toString(),
+                    name,
+                    designation,
+                    posting,
+                    contact
+                };
+                employeeDatabase.push(newEmployee);
+            }
+
+            saveEmployeeDatabase();
+            renderEmployeeDatabase();
+            closeEmployeeModal();
+            
+            // AUTO SYNC: Update attendance data with new employee details
+            if (Object.keys(perPerson).length > 0) {
+                updateEmployeeDetailsInDashboard();
+                applyFilterAndRender();
+                showNotification(`Employee ${id ? 'updated' : 'added'} and attendance data synced successfully!`);
+            } else {
+                showNotification(`Employee ${id ? 'updated' : 'added'} successfully!`);
+            }
+        }
+
+        // Delete employee with auto sync
+        function deleteEmployee(id) {
+            if (confirm('Are you sure you want to delete this employee?')) {
+                const empToDelete = employeeDatabase.find(emp => emp.id === id);
+                employeeDatabase = employeeDatabase.filter(emp => emp.id !== id);
+                saveEmployeeDatabase();
+                renderEmployeeDatabase();
+                
+                // AUTO SYNC: Update the dashboard if data exists
+                if (Object.keys(perPerson).length > 0) {
+                    updateEmployeeDetailsInDashboard();
+                    applyFilterAndRender();
+                    showNotification('Employee deleted and attendance data updated!');
+                } else {
+                    showNotification('Employee deleted successfully!');
+                }
+            }
+        }
+
+        // Sync employees with attendance data manually
+        function syncEmployeesWithAttendance() {
+            if (Object.keys(perPerson).length === 0) {
+                alert('No attendance data available. Please process WhatsApp file first.');
+                return;
+            }
+            
+            updateEmployeeDetailsInDashboard();
+            applyFilterAndRender();
+            showNotification('Employee details synced with attendance data!');
+        }
+
+        // Show notification
+        function showNotification(message, type = 'success') {
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.className = `notification ${type === 'error' ? 'error' : ''}`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            // Animate in
+            setTimeout(() => {
+                notification.style.transform = 'translateX(0)';
+            }, 100);
+            
+            // Animate out and remove
+            setTimeout(() => {
+                notification.style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    if (document.body.contains(notification)) {
+                        document.body.removeChild(notification);
+                    }
+                }, 300);
+            }, 4000);
+        }
+
+        // Default employee details agar koi match na ho
+        function getDefaultEmployeeDetails(senderKey) {
+            return {
+                name: senderKey,
+                designation: '-',
+                posting: '-',
+                contact: senderKey.replace(/\D/g, '').length >= 7 ? senderKey.replace(/\D/g, '') : '-'
+            };
+        }
+
+        // IMPROVED: Get employee details by name or phone - STRONGER MATCHING ALGORITHM
+        function getEmployeeDetails(senderKey) {
+            if (!senderKey) return getDefaultEmployeeDetails(senderKey);
+            
+            const cleanSender = senderKey.toLowerCase().trim();
+            const senderDigits = cleanSender.replace(/\D/g, '');
+            
+            // 1. First try exact phone number match
+            if (senderDigits.length >= 7) {
+                const byExactPhone = employeeDatabase.find(emp => {
+                    if (!emp.contact) return false;
+                    const empDigits = emp.contact.replace(/\D/g, '');
+                    return empDigits === senderDigits;
+                });
+                if (byExactPhone) return byExactPhone;
+                
+                // 2. Try partial phone match (last 7-10 digits)
+                const byPartialPhone = employeeDatabase.find(emp => {
+                    if (!emp.contact) return false;
+                    const empDigits = emp.contact.replace(/\D/g, '');
+                    
+                    // Match last 7-10 digits
+                    const senderLast7 = senderDigits.slice(-7);
+                    const empLast7 = empDigits.slice(-7);
+                    
+                    if (senderLast7 === empLast7) return true;
+                    
+                    // Also try with last 10 digits
+                    const senderLast10 = senderDigits.slice(-10);
+                    const empLast10 = empDigits.slice(-10);
+                    
+                    return senderLast10 === empLast10;
+                });
+                if (byPartialPhone) return byPartialPhone;
+            }
+            
+            // 3. Try name matching with multiple strategies
+            const byName = employeeDatabase.find(emp => {
+                if (!emp.name) return false;
+                
+                const empName = emp.name.toLowerCase().replace(/dr\.?\s*/g, '').trim();
+                const senderName = cleanSender.replace(/dr\.?\s*/g, '').trim();
+                
+                // Multiple matching strategies
+                const exactMatch = empName === senderName;
+                const containsMatch = senderName.includes(empName) || empName.includes(senderName);
+                const wordMatch = hasCommonWords(empName, senderName);
+                const similarityMatch = getSimilarity(empName, senderName) > 0.7;
+                
+                return exactMatch || containsMatch || wordMatch || similarityMatch;
+            });
+            
+            if (byName) return byName;
+            
+            // 4. Try matching with designation or posting office
+            const byOtherFields = employeeDatabase.find(emp => {
+                const empDesignation = (emp.designation || '').toLowerCase();
+                const empPosting = (emp.posting || '').toLowerCase();
+                const senderName = cleanSender.replace(/dr\.?\s*/g, '').trim();
+                
+                return cleanSender.includes(empDesignation) || 
+                       cleanSender.includes(empPosting) ||
+                       empDesignation.includes(senderName) ||
+                       empPosting.includes(senderName);
+            });
+            
+            if (byOtherFields) return byOtherFields;
+            
+            // 5. Default return agar koi match na mile
+            return getDefaultEmployeeDetails(senderKey);
+        }
+
+        // Check if two strings have common words
+        function hasCommonWords(str1, str2) {
+            const words1 = str1.split(/\s+/).filter(w => w.length > 2);
+            const words2 = str2.split(/\s+/).filter(w => w.length > 2);
+            
+            for (const word1 of words1) {
+                for (const word2 of words2) {
+                    if (word1 === word2 || 
+                        word1.includes(word2) || 
+                        word2.includes(word1) ||
+                        getSimilarity(word1, word2) > 0.8) {
+                        return true;
+                    }
+                }
+            }
+            
+            return false;
+        }
+
+        // Calculate string similarity (for better name matching)
+        function getSimilarity(s1, s2) {
+            const longer = s1.length > s2.length ? s1 : s2;
+            const shorter = s1.length > s2.length ? s2 : s1;
+            
+            if (longer.length === 0) return 1.0;
+            
+            return (longer.length - editDistance(longer, shorter)) / parseFloat(longer.length);
+        }
+
+        function editDistance(s1, s2) {
+            s1 = s1.toLowerCase();
+            s2 = s2.toLowerCase();
+            
+            const costs = [];
+            for (let i = 0; i <= s1.length; i++) {
+                let lastValue = i;
+                for (let j = 0; j <= s2.length; j++) {
+                    if (i === 0) costs[j] = j;
+                    else {
+                        if (j > 0) {
+                            let newValue = costs[j - 1];
+                            if (s1.charAt(i - 1) !== s2.charAt(j - 1))
+                                newValue = Math.min(Math.min(newValue, lastValue), costs[j]) + 1;
+                            costs[j - 1] = lastValue;
+                            lastValue = newValue;
+                        }
+                    }
+                }
+                if (i > 0) costs[s2.length] = lastValue;
+            }
+            return costs[s2.length];
+        }
+
+        // Update employee details in dashboard - IMPROVED VERSION
+        function updateEmployeeDetailsInDashboard() {
+            let updatedCount = 0;
+            
+            for (const p in perPerson) {
+                const empDetails = getEmployeeDetails(p);
+                const oldName = perPerson[p].details.fullName;
+                
+                perPerson[p].details = {
+                    fullName: empDetails.name,
+                    designation: empDetails.designation,
+                    posting: empDetails.posting,
+                    phone: empDetails.contact
+                };
+                
+                // Count if name was updated
+                if (oldName !== empDetails.name) {
+                    updatedCount++;
+                }
+            }
+            
+            console.log(`Updated ${updatedCount} employee records in attendance data`);
+            return updatedCount;
+        }
+
+        // Calculate top 5 performers only - FIXED VERSION
+        function calculateTopPerformers() {
+            const performers = [];
+            
+            for (const p in filteredPerPerson) {
+                const rec = filteredPerPerson[p];
+                const dates = Object.keys(rec.dates);
+                
+                let onTime = 0;
+                let totalDays = 0;
+                let locationCount = 0;
+                
+                for (const d of dates) {
+                    const e = rec.dates[d];
+                    if (e.status === 'On Time') onTime++;
+                    if (e.status !== 'Holiday (Sun)') totalDays++;
+                    if (e.location) locationCount++;
+                }
+                
+                // Calculate accuracy based on on-time days
+                const accuracy = totalDays > 0 ? Math.round((onTime / totalDays) * 100) : 0;
+                
+                // Calculate location score (percentage of days with location shared)
+                const locationScore = totalDays > 0 ? Math.round((locationCount / totalDays) * 100) : 0;
+                
+                // Combined score: 70% accuracy + 30% location score
+                const combinedScore = (accuracy * 0.7) + (locationScore * 0.3);
+                
+                performers.push({
+                    name: p,
+                    onTime: onTime,
+                    totalDays: totalDays,
+                    accuracy: accuracy,
+                    locationCount: locationCount,
+                    combinedScore: combinedScore
+                });
+            }
+            
+            // Sort by combined score (descending) and get top 5
+            performers.sort((a, b) => b.combinedScore - a.combinedScore);
+            const topPerformers = performers.slice(0, 5);
+            
+            // Update top performers display
+            const performersList = document.getElementById('performersList');
+            performersList.innerHTML = '';
+            
+            if (topPerformers.length > 0) {
+                topPerformers.forEach((performer, index) => {
+                    const rankColors = ['#ffd700', '#c0c0c0', '#cd7f32', '#4a5568', '#4a5568'];
+                    performersList.innerHTML += `
+                        <div class="performer-card">
+                            <div class="performer-rank" style="background: ${rankColors[index]}">${index + 1}</div>
+                            <div class="performer-name">${escapeHtml(performer.name)}</div>
+                            <div class="performer-stats">
+                                On Time: ${performer.onTime} / ${performer.totalDays} days
+                            </div>
+                            <div class="performer-stats">
+                                Location Shared: ${performer.locationCount} days
+                            </div>
+                            <div class="performer-accuracy">
+                                ${performer.accuracy}% Accuracy
+                            </div>
+                        </div>
+                    `;
+                });
+                document.getElementById('topPerformers').style.display = 'block';
+            } else {
+                document.getElementById('topPerformers').style.display = 'none';
+            }
+        }
+
+        // Scroll to top button functionality
+        const scrollTopBtn = document.getElementById('scrollTopBtn');
+        window.addEventListener('scroll', function() {
+            if (window.pageYOffset > 300) {
+                scrollTopBtn.classList.add('visible');
+            } else {
+                scrollTopBtn.classList.remove('visible');
+            }
+        });
+
+        scrollTopBtn.addEventListener('click', function() {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
+
+        // Chart toggle functionality
+        document.getElementById('toggleStackedChart').addEventListener('click', function() {
+            chartVisibility.stacked = !chartVisibility.stacked;
+            const icon = this.querySelector('i');
+            icon.className = chartVisibility.stacked ? 'fas fa-eye' : 'fas fa-eye-slash';
+            drawCharts();
+        });
+
+        document.getElementById('toggleTrendChart').addEventListener('click', function() {
+            chartVisibility.trend = !chartVisibility.trend;
+            const icon = this.querySelector('i');
+            icon.className = chartVisibility.trend ? 'fas fa-eye' : 'fas fa-eye-slash';
+            drawCharts();
+        });
+
+        // Card click filtering
+        document.querySelectorAll('.card[data-filter]').forEach(card => {
+            card.addEventListener('click', function() {
+                document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
+                this.classList.add('active');
+                activeFilter = this.getAttribute('data-filter');
+                drawCharts();
+            });
+        });
+
+        // Utility functions
+        function normalizeSpaces(s) { 
+            return s ? s.replace(/\u202F|\u00A0/g, ' ').replace(/\s+/g, ' ').trim() : ''; 
+        }
+        
+        function escapeHtml(s) { 
+            if (!s && s !== 0) return ''; 
+            return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); 
+        }
+
+        function normalizeSender(raw) {
+            const s = normalizeSpaces(raw || '');
+            const digits = s.replace(/[^\d\+]/g, '');
+            if (/^\+?\d{7,}$/.test(digits)) return digits;
+            if (/^dr[\.\s]/i.test(s)) return s;
+            return s || digits || 'Unknown';
+        }
+
+        // Render Employee Database
+        function renderEmployeeDatabase() {
+            const tbody = document.getElementById('employeeTableBody');
+            tbody.innerHTML = '';
+            
+            if (employeeDatabase.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="empty-state">
+                            <i class="fas fa-users"></i>
+                            <p>No employee data available. Add employees to see them here.</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            employeeDatabase.forEach(emp => {
+                tbody.insertAdjacentHTML('beforeend', `
+                    <tr>
+                        <td>${escapeHtml(emp.name)}</td>
+                        <td>${escapeHtml(emp.designation)}</td>
+                        <td>${escapeHtml(emp.posting)}</td>
+                        <td>${escapeHtml(emp.contact)}</td>
+                        <td>
+                            <button class="btn-ghost" onclick="openEmployeeModal(${JSON.stringify(emp).replace(/"/g, '&quot;')})">
+                                <i class="fas fa-edit"></i> Edit
+                            </button>
+                            <button class="btn-ghost" onclick="deleteEmployee('${emp.id}')" style="color: var(--danger);">
+                                <i class="fas fa-trash"></i> Delete
+                            </button>
+                        </td>
+                    </tr>
+                `);
+            });
+        }
+
+        // Time processing functions
+        function normalizeTime(raw) {
+            if (!raw) return '';
+            
+            raw = raw.trim().toUpperCase();
+            
+            // Pattern 1: Already in AM/PM format
+            const amPmPattern = /(\d{1,2}):(\d{2})\s*(AM|PM)/;
+            let match = raw.match(amPmPattern);
+            if (match) {
+                let hours = parseInt(match[1]);
+                const minutes = match[2];
+                const period = match[3];
+                
+                if (hours >= 1 && hours <= 12 && minutes >= 0 && minutes <= 59) {
+                    return `${hours}:${minutes} ${period}`;
+                }
+            }
+            
+            // Pattern 2: 24-hour format
+            const twentyFourHourPattern = /(\d{1,2}):(\d{2})/;
+            match = raw.match(twentyFourHourPattern);
+            if (match) {
+                let hours = parseInt(match[1]);
+                const minutes = match[2];
+                
+                if (hours >= 0 && hours <= 23 && minutes >= 0 && minutes <= 59) {
+                    let period = 'AM';
+                    
+                    if (hours === 0) {
+                        hours = 12;
+                        period = 'AM';
+                    } else if (hours === 12) {
+                        period = 'PM';
+                    } else if (hours > 12) {
+                        hours = hours - 12;
+                        period = 'PM';
+                    }
+                    
+                    return `${hours}:${minutes} ${period}`;
+                }
+            }
+            
+            return raw;
+        }
+
+        function timeStrToMinutes(t) {
+            if (!t) return 0;
+            
+            const normalizedTime = normalizeTime(t);
+            const m = normalizedTime.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+            if (!m) return 0;
+            
+            let hours = parseInt(m[1]);
+            const minutes = parseInt(m[2]);
+            const period = m[3].toUpperCase();
+            
+            if (period === 'PM' && hours !== 12) {
+                hours += 12;
+            } else if (period === 'AM' && hours === 12) {
+                hours = 0;
+            }
+            
+            return hours * 60 + minutes;
+        }
+
+        function parseCoordinatesFromUrl(url) {
+            try { url = decodeURIComponent(url); } catch (e) { }
+            let m = url.match(/[?&]q=([\-0-9\.]+),([\-0-9\.]+)/);
+            if (m) return { lat: parseFloat(m[1]), lon: parseFloat(m[2]) };
+            m = url.match(/@([\-0-9\.]+),([\-0-9\.]+)/);
+            if (m) return { lat: parseFloat(m[1]), lon: parseFloat(m[2]) };
+            m = url.match(/ll=([\-0-9\.]+),([\-0-9\.]+)/);
+            if (m) return { lat: parseFloat(m[1]), lon: parseFloat(m[2]) };
+            return null;
+        }
+
+        function isLocationMessageText(msg) {
+            if (!msg) return false;
+            const t = msg.toLowerCase();
+            if (t.includes('live location') || t.includes('location:') || /^at\s+/i.test(t)) return true;
+            if (t.includes('maps.google') || t.includes('google.com/maps') || t.includes('goo.gl/maps') || t.includes('maps.app.goo.gl')) return true;
+            return false;
+        }
+
+        // Date processing
+        function detectDateOrder(samples) {
+            let dd = 0, mm = 0;
+            for (const s of samples) {
+                const p = s.split(/[\/\-.]/).map(x => x.replace(/\D/g, '')).filter(Boolean);
+                if (p.length >= 3) {
+                    const a = Number(p[0]), b = Number(p[1]);
+                    if (a > 12) dd++;
+                    else if (b > 12) mm++;
+                }
+            }
+            return (mm > dd) ? 'MMDD' : 'DDMM';
+        }
+
+        function normalizeDate(raw, order = 'DDMM') {
+            const parts = raw.split(/[\/\-.]/).map(p => p.trim());
+            if (parts.length < 3) return raw;
+            let d, m, y;
+            if (order === 'DDMM') {
+                d = parts[0]; m = parts[1]; y = parts[2];
+            } else {
+                m = parts[0]; d = parts[1]; y = parts[2];
+            }
+            if (y.length === 2) y = '20' + y;
+            if (d.length === 1) d = '0' + d;
+            if (m.length === 1) m = '0' + m;
+            return `${d}/${m}/${y}`;
+        }
+
+        function getDateDayOfWeek(dateKey) {
+            const [dd, mm, yy] = dateKey.split('/').map(Number);
+            return new Date(yy, mm - 1, dd).getDay();
+        }
+
+        // FIXED WhatsApp parsing function
+        function parseWhatsAppText(text) {
+            text = text.replace(/\u202F|\u00A0/g, ' ');
+            const lines = text.split(/\r?\n/);
+            const samples = [];
+            
+            // Collect date samples for format detection
+            for (let i = 0; i < Math.min(lines.length, 200); i++) {
+                const l = lines[i].trim();
+                const m = l.match(/^(\[?)(\d{1,2}[\/\-.]\d{1,2}[\/\-.]\d{2,4})/);
+                if (m) samples.push(m[2]);
+            }
+            
+            const dateOrder = detectDateOrder(samples);
+            
+            // Enhanced message patterns for better WhatsApp format detection
+            const patterns = [
+                // Pattern for: 03/04/2024, 8:30 AM - Dr. Nargis Lashari: Message
+                /^(\d{1,2}[\/\-.]\d{1,2}[\/\-.]\d{2,4})[, ]+\s*(\d{1,2}:\d{2}(?::\d{2})?\s*(?:AM|PM|am|pm)?)\s*-\s*([^:]+):\s*(.*)$/,
+                // Pattern for: [03/04/2024, 8:30] Dr. Nargis Lashari: Message
+                /^\[?(\d{1,2}[\/\-.]\d{1,2}[\/\-.]\d{2,4})[, ]+\s*(\d{1,2}:\d{2}(?::\d{2})?)\]?\s*([^:]+):\s*(.*)$/,
+                // Pattern for: 03/04/2024 8:30 - Dr. Nargis Lashari: Message
+                /^(\d{1,2}[\/\-.]\d{1,2}[\/\-.]\d{2,4})\s+(\d{1,2}:\d{2}(?::\d{2})?)\s*-\s*([^:]+):\s*(.*)$/,
+                // Pattern for: 03/04/2024, 8:30 AM - Dr. Nargis Lashari: Message
+                /^(\d{1,2}[\/\-.]\d{1,2}[\/\-.]\d{2,4})\s*,\s*(\d{1,2}:\d{2}(?::\d{2})?\s*(?:AM|PM)?)\s*-\s*([^:]+):\s*(.*)$/i,
+                // Pattern for: 03-04-2024, 8:30 - Dr. Nargis Lashari: Message
+                /^(\d{1,2}-\d{1,2}-\d{2,4})[, ]+\s*(\d{1,2}:\d{2}(?::\d{2})?\s*(?:AM|PM|am|pm)?)\s*-\s*([^:]+):\s*(.*)$/,
+                // Pattern for: 03.04.2024, 8:30 - Dr. Nargis Lashari: Message
+                /^(\d{1,2}\.\d{1,2}\.\d{2,4})[, ]+\s*(\d{1,2}:\d{2}(?::\d{2})?\s*(?:AM|PM|am|pm)?)\s*-\s*([^:]+):\s*(.*)$/
+            ];
+            
+            const msgs = [];
+            let buffer = null;
+            
+            for (const rawLine of lines) {
+                const line = rawLine.trim();
+                if (!line) {
+                    if (buffer) buffer.msgRaw += '\n';
+                    continue;
+                }
+                
+                let matched = null;
+                for (const re of patterns) {
+                    const m = line.match(re);
+                    if (m) {
+                        matched = m;
+                        break;
+                    }
+                }
+                
+                if (matched) {
+                    if (buffer) msgs.push(buffer);
+                    
+                    let dateRaw = matched[1],
+                        timeRaw = matched[2],
+                        senderRaw = matched[3],
+                        msgRaw = matched[4] || '';
+                    
+                    // Clean and normalize time
+                    if (!timeRaw.match(/[APap][Mm]/) && /\d{2}:\d{2}:\d{2}/.test(timeRaw)) {
+                        timeRaw = timeRaw.split(':').slice(0, 2).join(':');
+                    }
+                    
+                    const dateKey = normalizeDate(dateRaw, dateOrder);
+                    const timeNorm = normalizeTime(timeRaw);
+                    
+                    buffer = {
+                        dateKey,
+                        timeStr: timeNorm,
+                        senderRaw: normalizeSpaces(senderRaw),
+                        msgRaw: msgRaw.trim()
+                    };
+                } else {
+                    if (buffer) buffer.msgRaw += '\n' + line;
+                    else if (msgs.length) msgs[msgs.length - 1].msgRaw += '\n' + line;
+                }
+            }
+            
+            if (buffer) msgs.push(buffer);
+            
+            // Debug: Show parsed messages in console
+            console.log('Parsed messages:', msgs);
+            
+            return msgs;
+        }
+
+        // Build per-person records & locations
+        function buildData(messages) {
+            perPerson = {};
+            locationItems = [];
+            
+            console.log('Building data from messages:', messages);
+            
+            messages.forEach(m => {
+                const pKey = normalizeSender(m.senderRaw);
+                const empDetails = getEmployeeDetails(pKey);
+                
+                if (!perPerson[pKey]) {
+                    perPerson[pKey] = {
+                        details: {
+                            fullName: empDetails.name,
+                            designation: empDetails.designation,
+                            posting: empDetails.posting,
+                            phone: empDetails.contact
+                        },
+                        dates: {}
+                    };
+                }
+                
+                if (!perPerson[pKey].dates[m.dateKey]) {
+                    perPerson[pKey].dates[m.dateKey] = {
+                        checkIn: null,
+                        checkOut: null,
+                        location: null,
+                        rawMessages: []
+                    };
+                }
+                
+                const entry = perPerson[pKey].dates[m.dateKey];
+                entry.rawMessages.push({ time: m.timeStr, text: m.msgRaw });
+
+                const text = m.msgRaw || '';
+                const urlMatch = text.match(/https?:\/\/[^\s]+/i);
+                const url = urlMatch ? urlMatch[0].replace(/[.,]$/, '') : null;
+
+                // Location detection
+                if (isLocationMessageText(text) || url) {
+                    let coords = null;
+                    if (url) coords = parseCoordinatesFromUrl(url);
+                    
+                    let place = '';
+                    const atMatch = text.match(/\bAt\s+(.+)$/i);
+                    if (atMatch) place = atMatch[1].trim();
+                    
+                    if (!place && text.toLowerCase().includes('live location')) {
+                        const parts = text.split(/\r?\n/).map(x => x.trim()).filter(Boolean);
+                        if (parts.length > 1) place = parts.slice(1).join(' / ');
+                    }
+                    
+                    if (!place) place = text.replace(/live location shared/ig, '').replace(/location:/ig, '').trim();
+                    
+                    locationItems.push({
+                        date: m.dateKey,
+                        time: m.timeStr,
+                        senderRaw: m.senderRaw,
+                        senderKey: pKey,
+                        placeText: place || '-',
+                        link: url || '',
+                        lat: coords ? coords.lat : '',
+                        lon: coords ? coords.lon : '',
+                        raw: text
+                    });
+                    
+                    // Update location for the entry
+                    if (url) entry.location = url;
+                    else if (!entry.location && text.trim()) entry.location = text.trim().split(/\r?\n/)[0];
+                }
+
+                // Check-in/Check-out detection
+                const normalizedText = text.toLowerCase();
+                const isCheckIn = normalizedText.includes('in') ||
+                    normalizedText.includes('check in') ||
+                    normalizedText.includes('arrived') ||
+                    normalizedText.includes('reached');
+                
+                const isCheckOut = normalizedText.includes('out') ||
+                    normalizedText.includes('check out') ||
+                    normalizedText.includes('left') ||
+                    normalizedText.includes('going') ||
+                    normalizedText.includes('departed');
+                
+                if (isLocationMessageText(text) || isCheckIn || isCheckOut) {
+                    const currentTime = m.timeStr;
+                    const currentTimeMins = timeStrToMinutes(currentTime);
+                    
+                    // Set check-in (earliest time of the day)
+                    if (!entry.checkIn || currentTimeMins < timeStrToMinutes(entry.checkIn)) {
+                        entry.checkIn = currentTime;
+                    }
+                    
+                    // Set check-out (latest time of the day)
+                    if (!entry.checkOut || currentTimeMins > timeStrToMinutes(entry.checkOut)) {
+                        entry.checkOut = currentTime;
+                    }
+                    
+                    if (url) entry.location = url;
+                    else if (!entry.location && text.trim()) entry.location = text.trim().split(/\r?\n/)[0];
+                }
+            });
+
+            // Calculate status for each entry
+            for (const p in perPerson) {
+                for (const d in perPerson[p].dates) {
+                    const e = perPerson[p].dates[d];
+                    const dayOfWeek = getDateDayOfWeek(d); // 0 = Sunday, 5 = Friday
+                    
+                    if (dayOfWeek === 0) {
+                        e.status = 'Holiday (Sun)';
+                    } else if (!e.checkIn) {
+                        e.status = 'Absent';
+                    } else {
+                        const cin = timeStrToMinutes(e.checkIn);
+                        const cout = timeStrToMinutes(e.checkOut || e.checkIn);
+                        
+                        // Special handling for Friday - use 12:00 PM as early time
+                        const earlyTime = (dayOfWeek === 5) ? FRIDAY_EARLY_TIME_MINS : EARLY_TIME_MINS;
+                        
+                        if (e.checkOut && cout < earlyTime) {
+                            e.status = 'Early';
+                        } else if (cin > LATE_TIME_MINS) {
+                            e.status = 'Late';
+                        } else {
+                            e.status = 'On Time';
+                        }
+                    }
+                }
+            }
+            
+            console.log('Built perPerson data:', perPerson);
+        }
+
+        // Filtering and rendering
+        function applyFilterAndRender() {
+            const start = document.getElementById('startDate').value;
+            const end = document.getElementById('endDate').value;
+            const status = document.getElementById('statusFilter').value;
+            const search = (document.getElementById('searchBox').value || '').toLowerCase().trim();
+
+            filteredPerPerson = {};
+            for (const p in perPerson) {
+                for (const d in perPerson[p].dates) {
+                    // convert d 'DD/MM/YYYY' to Date
+                    const [dd, mm, yy] = d.split('/').map(Number);
+                    const dt = new Date(yy, mm - 1, dd, 0, 0, 0);
+                    let dateOk = true;
+                    if (start && !end) {
+                        const s = new Date(start + 'T00:00:00'), e = new Date(start + 'T23:59:59');
+                        dateOk = (dt >= s && dt <= e);
+                    } else if (start && end) {
+                        const s = new Date(start + 'T00:00:00'), e = new Date(end + 'T23:59:59');
+                        dateOk = (dt >= s && dt <= e);
+                    }
+                    if (!dateOk) continue;
+                    const entry = perPerson[p].dates[d];
+                    if (status && entry.status !== status) continue;
+                    if (search) {
+                        const hay = (p + ' ' + (entry.location || '') + ' ' + perPerson[p].details.posting + ' ' + perPerson[p].details.designation + ' ' + entry.rawMessages.map(r => r.text).join(' ')).toLowerCase();
+                        if (!hay.includes(search)) continue;
+                    }
+                    if (!filteredPerPerson[p]) filteredPerPerson[p] = { details: perPerson[p].details, dates: {} };
+                    filteredPerPerson[p].dates[d] = entry;
+                }
+            }
+            renderAll();
+        }
+
+        function renderAll() {
+            renderAttendanceTable();
+            renderDailySummary();
+            renderLocations();
+            updateCards();
+            drawCharts();
+            calculateTopPerformers();
+        }
+
+        function renderAttendanceTable() {
+            const tbody = document.querySelector('#attendanceTable tbody');
+            tbody.innerHTML = '';
+            const persons = Object.keys(filteredPerPerson).sort((a, b) => a.localeCompare(b));
+            
+            if (persons.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" class="empty-state"><i class="fas fa-users"></i><p>No attendance data available for selected filters.</p></td></tr>`;
+                return;
+            }
+            
+            for (const p of persons) {
+                const rec = filteredPerPerson[p];
+                const dates = Object.keys(rec.dates).sort((a, b) => {
+                    const [da, ma, ya] = a.split('/');
+                    const [db, mb, yb] = b.split('/');
+                    return new Date(ya, ma - 1, da) - new Date(yb, mb - 1, db);
+                });
+                
+                for (const d of dates) {
+                    const e = rec.dates[d];
+                    let cls;
+                    if (e.status === 'On Time') { cls = 'status-on'; }
+                    else if (e.status === 'Late') { cls = 'status-late'; }
+                    else if (e.status === 'Early') { cls = 'status-early'; }
+                    else if (e.status === 'Absent') { cls = 'status-absent'; }
+                    else if (e.status.startsWith('Holiday')) { cls = 'status-holiday'; }
+                    else { cls = 'status-absent'; } // Fallback
+
+                    const locHtml = e.location ?
+                        (e.location.startsWith('http') ?
+                            `<a class="link" href="${escapeHtml(e.location)}" target="_blank"><i class="fas fa-external-link-alt"></i> Open</a>` :
+                            escapeHtml(e.location)) :
+                        '-';
+                    
+                    tbody.insertAdjacentHTML('beforeend', `<tr>
+                        <td>${escapeHtml(rec.details.fullName)}</td>
+                        <td>${escapeHtml(rec.details.designation)}</td>
+                        <td>${escapeHtml(rec.details.posting)}</td>
+                        <td>${escapeHtml(d)}</td>
+                        <td>${escapeHtml(e.checkIn || '-')}</td>
+                        <td>${escapeHtml(e.checkOut || '-')}</td>
+                        <td><span class="${cls}">${escapeHtml(e.status)}</span></td>
+                        <td>${locHtml}</td>
+                    </tr>`);
+                }
+            }
+        }
+
+        function renderDailySummary() {
+            const tbody = document.querySelector('#dailySummaryTable tbody');
+            tbody.innerHTML = '';
+            const summaryStats = document.getElementById('summaryStats');
+            summaryStats.innerHTML = '';
+            
+            const persons = Object.keys(filteredPerPerson).sort((a, b) => a.localeCompare(b));
+            
+            if (persons.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9" class="empty-state"><i class="fas fa-chart-bar"></i><p>No data for selected filters.</p></td></tr>';
+                return;
+            }
+            
+            // Calculate overall statistics
+            let totalDays = 0;
+            let totalOnTime = 0;
+            let totalLate = 0;
+            let totalEarly = 0;
+            let totalAbsent = 0;
+            let totalSunday = 0;
+            let totalPresent = 0;
+            
+            for (const p of persons) {
+                const rec = filteredPerPerson[p];
+                const dates = Object.keys(rec.dates);
+                totalDays += dates.length;
+                
+                for (const d of dates) {
+                    const e = rec.dates[d];
+                    if (e.status === 'On Time') totalOnTime++;
+                    else if (e.status === 'Late') totalLate++;
+                    else if (e.status === 'Early') totalEarly++;
+                    else if (e.status === 'Absent') totalAbsent++;
+                    else if (e.status === 'Holiday (Sun)') totalSunday++;
+                }
+            }
+            
+            totalPresent = totalOnTime + totalLate + totalEarly;
+            
+            // Update card values
+            document.getElementById('totalPeople').innerText = persons.length;
+            document.getElementById('totalPresent').innerText = totalPresent;
+            document.getElementById('totalOnTime').innerText = totalOnTime;
+            document.getElementById('totalAbsent').innerText = totalAbsent;
+            
+            // Render summary statistics
+            summaryStats.innerHTML = `
+                <div class="summary-stat" data-filter="all">
+                    <div class="summary-stat-value">${totalDays}</div>
+                    <div class="summary-stat-label">Total Days</div>
+                </div>
+                <div class="summary-stat" data-filter="present">
+                    <div class="summary-stat-value">${totalPresent}</div>
+                    <div class="summary-stat-label">Present</div>
+                    <div class="summary-stat-percent percent-positive">${totalDays > 0 ? Math.round((totalPresent / totalDays) * 100) : 0}%</div>
+                </div>
+                <div class="summary-stat" data-filter="onTime">
+                    <div class="summary-stat-value">${totalOnTime}</div>
+                    <div class="summary-stat-label">On Time</div>
+                    <div class="summary-stat-percent percent-positive">${totalDays > 0 ? Math.round((totalOnTime / totalDays) * 100) : 0}%</div>
+                </div>
+                <div class="summary-stat" data-filter="late">
+                    <div class="summary-stat-value">${totalLate}</div>
+                    <div class="summary-stat-label">Late</div>
+                    <div class="summary-stat-percent percent-negative">${totalDays > 0 ? Math.round((totalLate / totalDays) * 100) : 0}%</div>
+                </div>
+                <div class="summary-stat" data-filter="early">
+                    <div class="summary-stat-value">${totalEarly}</div>
+                    <div class="summary-stat-label">Early</div>
+                    <div class="summary-stat-percent percent-negative">${totalDays > 0 ? Math.round((totalEarly / totalDays) * 100) : 0}%</div>
+                </div>
+                <div class="summary-stat" data-filter="absent">
+                    <div class="summary-stat-value">${totalAbsent}</div>
+                    <div class="summary-stat-label">Absent</div>
+                    <div class="summary-stat-percent percent-negative">${totalDays > 0 ? Math.round((totalAbsent / totalDays) * 100) : 0}%</div>
+                </div>
+                <div class="summary-stat" data-filter="sunday">
+                    <div class="summary-stat-value">${totalSunday}</div>
+                    <div class="summary-stat-label">Sundays</div>
+                    <div class="summary-stat-percent">${totalDays > 0 ? Math.round((totalSunday / totalDays) * 100) : 0}%</div>
+                </div>
+            `;
+            
+            // Render person-wise summary
+            for (const p of persons) {
+                const rec = filteredPerPerson[p];
+                const dates = Object.keys(rec.dates);
+                
+                let onTime = 0;
+                let late = 0;
+                let early = 0;
+                let absent = 0;
+                let sunday = 0;
+                
+                for (const d of dates) {
+                    const e = rec.dates[d];
+                    if (e.status === 'On Time') onTime++;
+                    else if (e.status === 'Late') late++;
+                    else if (e.status === 'Early') early++;
+                    else if (e.status === 'Absent') absent++;
+                    else if (e.status === 'Holiday (Sun)') sunday++;
+                }
+                
+                const totalPersonDays = dates.length;
+                const present = onTime + late + early;
+                const accuracy = totalPersonDays > 0 ? Math.round((onTime / totalPersonDays) * 100) : 0;
+                
+                tbody.insertAdjacentHTML('beforeend', `<tr>
+                    <td>${escapeHtml(rec.details.fullName)}</td>
+                    <td>${totalPersonDays}</td>
+                    <td>${present}</td>
+                    <td>${onTime}</td>
+                    <td>${late}</td>
+                    <td>${early}</td>
+                    <td>${absent}</td>
+                    <td>${sunday}</td>
+                    <td><strong>${accuracy}%</strong></td>
+                </tr>`);
+            }
+        }
+
+        function renderLocations() {
+            const tbody = document.querySelector('#locationsTable tbody');
+            tbody.innerHTML = '';
+            const start = document.getElementById('startDate').value;
+            const end = document.getElementById('endDate').value;
+            const q = (document.getElementById('searchBox').value || '').toLowerCase().trim();
+            
+            const items = locationItems.filter(it => {
+                const [dd, mm, yy] = it.date.split('/').map(Number);
+                const dt = new Date(yy, mm - 1, dd);
+                
+                if (start && !end) {
+                    const s = new Date(start + 'T00:00:00'), e = new Date(start + 'T23:59:59');
+                    if (!(dt >= s && dt <= e)) return false;
+                }
+                else if (start && end) {
+                    const s = new Date(start + 'T00:00:00'), e = new Date(end + 'T23:59:59');
+                    if (!(dt >= s && dt <= e)) return false;
+                }
+                
+                if (q) {
+                    if (!((it.senderRaw || '').toLowerCase().includes(q) ||
+                        (it.senderKey || '').toLowerCase().includes(q) ||
+                        (it.placeText || '').toLowerCase().includes(q) ||
+                        (it.raw || '').toLowerCase().includes(q))) return false;
+                }
+                return true;
+            });
+            
+            if (items.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="empty-state"><i class="fas fa-map-marker-alt"></i><p>No location data available for selected filters.</p></td></tr>`;
+                return;
+            }
+            
+            items.forEach((it, i) => {
+                const linkHtml = it.link ? `<a class="link" href="${escapeHtml(it.link)}" target="_blank"><i class="fas fa-external-link-alt"></i> Open</a>` : '-';
+                tbody.insertAdjacentHTML('beforeend', `<tr>
+                    <td>${i + 1}</td>
+                    <td>${escapeHtml(it.date)}</td>
+                    <td>${escapeHtml(it.time)}</td>
+                    <td>${escapeHtml(it.senderRaw)}</td>
+                    <td>${escapeHtml(it.placeText)}</td>
+                    <td>${linkHtml}</td>
+                </tr>`);
+            });
+        }
+
+        function updateCards() {
+            document.getElementById('totalPeople').innerText = Object.keys(filteredPerPerson).length;
+        }
+
+        function drawCharts() {
+            // Get all dates from filtered data
+            const allDates = new Set();
+            for (const p in filteredPerPerson) {
+                for (const d in filteredPerPerson[p].dates) {
+                    allDates.add(d);
+                }
+            }
+            
+            // Sort dates
+            const sortedDates = Array.from(allDates).sort((a, b) => {
+                const [da, ma, ya] = a.split('/').map(Number);
+                const [db, mb, yb] = b.split('/').map(Number);
+                return new Date(ya, ma - 1, da) - new Date(yb, mb - 1, db);
+            });
+            
+            // Build daily counts for ALL dates in range
+            const daily = {};
+            sortedDates.forEach(d => {
+                daily[d] = { on: 0, late: 0, early: 0, abs: 0, holiday: 0 };
+            });
+            
+            for (const p in filteredPerPerson) {
+                for (const d in filteredPerPerson[p].dates) {
+                    const s = filteredPerPerson[p].dates[d].status;
+                    if (s === 'On Time') daily[d].on++;
+                    else if (s === 'Late') daily[d].late++;
+                    else if (s === 'Early') daily[d].early++;
+                    else if (s === 'Absent') daily[d].abs++;
+                    else if (s.startsWith('Holiday')) daily[d].holiday++;
+                }
+            }
+            
+            const labels = sortedDates;
+            const on = labels.map(l => daily[l].on || 0);
+            const late = labels.map(l => daily[l].late || 0);
+            const early = labels.map(l => daily[l].early || 0);
+            const abs = labels.map(l => daily[l].abs || 0);
+            const holiday = labels.map(l => daily[l].holiday || 0);
+            
+            // Apply filtering based on active filter
+            let filteredDatasets = [];
+            
+            if (activeFilter === 'all' || activeFilter === 'present') {
+                filteredDatasets = [
+                    { label: 'On Time', data: on, backgroundColor: '#16a34a', borderColor: '#16a34a' },
+                    { label: 'Late', data: late, backgroundColor: '#f59e0b', borderColor: '#f59e0b' },
+                    { label: 'Early', data: early, backgroundColor: '#ef4444', borderColor: '#ef4444' },
+                    { label: 'Absent', data: abs, backgroundColor: '#64748b', borderColor: '#64748b' },
+                    { label: 'Holiday', data: holiday, backgroundColor: '#3b82f6', borderColor: '#3b82f6' }
+                ];
+            } else if (activeFilter === 'onTime') {
+                filteredDatasets = [
+                    { label: 'On Time', data: on, backgroundColor: '#16a34a', borderColor: '#16a34a' }
+                ];
+            } else if (activeFilter === 'absent') {
+                filteredDatasets = [
+                    { label: 'Absent', data: abs, backgroundColor: '#64748b', borderColor: '#64748b' }
+                ];
+            }
+            
+            // stacked chart
+            if (stackedChart) stackedChart.destroy();
+            const stackedCanvas = document.getElementById('stackedChart');
+            const stackedCtx = stackedCanvas.getContext('2d');
+            
+            if (chartVisibility.stacked) {
+                stackedChart = new Chart(stackedCtx, {
+                    type: 'bar',
+                    data: {
+                        labels,
+                        datasets: filteredDatasets
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'bottom' },
+                            tooltip: {
+                                mode: 'index',
+                                intersect: false
+                            }
+                        },
+                        scales: {
+                            x: {
+                                stacked: true,
+                                ticks: {
+                                    maxRotation: 45,
+                                    minRotation: 45
+                                }
+                            },
+                            y: {
+                                stacked: true,
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Number of People'
+                                }
+                            }
+                        }
+                    }
+                });
+            } else {
+                // Clear the canvas when hidden
+                stackedCtx.clearRect(0, 0, stackedCanvas.width, stackedCanvas.height);
+                stackedCtx.font = '16px Arial';
+                stackedCtx.fillStyle = '#6b7280';
+                stackedCtx.textAlign = 'center';
+                stackedCtx.fillText('Chart is hidden', stackedCanvas.width / 2, stackedCanvas.height / 2);
+            }
+            
+            // trend chart
+            if (trendChart) trendChart.destroy();
+            const trendCanvas = document.getElementById('trendChart');
+            const trendCtx = trendCanvas.getContext('2d');
+            
+            if (chartVisibility.trend) {
+                trendChart = new Chart(trendCtx, {
+                    type: 'line',
+                    data: {
+                        labels,
+                        datasets: filteredDatasets.map(ds => ({
+                            ...ds,
+                            type: 'line',
+                            fill: false,
+                            tension: 0.3
+                        }))
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'bottom' },
+                            tooltip: {
+                                mode: 'index',
+                                intersect: false
+                            }
+                        },
+                        scales: {
+                            x: {
+                                ticks: {
+                                    maxRotation: 45,
+                                    minRotation: 45
+                                }
+                            },
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Number of People'
+                                }
+                            }
+                        }
+                    }
+                });
+            } else {
+                // Clear the canvas when hidden
+                trendCtx.clearRect(0, 0, trendCanvas.width, trendCanvas.height);
+                trendCtx.font = '16px Arial';
+                trendCtx.fillStyle = '#6b7280';
+                trendCtx.textAlign = 'center';
+                trendCtx.fillText('Chart is hidden', trendCanvas.width / 2, trendCanvas.height / 2);
+            }
+        }
+
+        // Excel export
+        function exportExcelGrouped() {
+            if (Object.keys(perPerson).length === 0) {
+                alert('No data to export. Please process a WhatsApp file first.');
+                return;
+            }
+            
+            // Define styles
+            const borderStyle = { style: "thin" };
+            const commonBorder = { top: borderStyle, bottom: borderStyle, left: borderStyle, right: borderStyle };
+            
+            const cellStyle = {
+                border: commonBorder,
+                alignment: { horizontal: 'center', vertical: 'middle', wrapText: true }
+            };
+            const headerStyle = {
+                font: { bold: true },
+                border: commonBorder,
+                alignment: { horizontal: 'center', vertical: 'middle', wrapText: true }
+            };
+            const nameColumnStyle = {
+                border: commonBorder,
+                alignment: { horizontal: 'left', vertical: 'middle', wrapText: true }
+            };
+            const headerNameColumnStyle = {
+                font: { bold: true },
+                border: commonBorder,
+                alignment: { horizontal: 'left', vertical: 'middle', wrapText: true }
+            };
+
+            // Determine date list 
+            const start = document.getElementById('startDate').value;
+            const end = document.getElementById('endDate').value;
+            let dateList = [];
+            if (start && !end) {
+                dateList = [new Date(start)];
+            } else if (start && end) {
+                const s = new Date(start + 'T00:00:00'), e = new Date(end + 'T00:00:00');
+                for (let d = new Date(s); d <= e; d.setDate(d.getDate() + 1)) { dateList.push(new Date(d)); }
+            } else {
+                const set = new Set();
+                for (const p in perPerson) { for (const d in perPerson[p].dates) set.add(d); }
+                dateList = Array.from(set).map(s => { const [dd, mm, yy] = s.split('/').map(Number); return new Date(yy, mm - 1, dd); }).sort((a, b) => a - b);
+            }
+            const dateLabels = dateList.map(d => { const dd = String(d.getDate()).padStart(2, '0'); const mm = String(d.getMonth() + 1).padStart(2, '0'); const yy = d.getFullYear(); return `${dd}/${mm}/${yy}`; });
+
+            // Build header rows
+            const headerRow1 = ['Emp Name', 'Designation', 'Posting Office', 'Contact #'];
+            const headerRow2 = ['', '', '', ''];
+            dateLabels.forEach(lbl => { headerRow1.push(lbl); headerRow1.push(''); headerRow1.push(''); headerRow2.push('Check-In'); headerRow2.push('Check-Out'); headerRow2.push('Status'); });
+
+            // Data rows
+            const persons = Object.keys(perPerson).sort((a, b) => a.localeCompare(b));
+            const dataRows = [];
+            for (const p of persons) {
+                const rec = perPerson[p];
+                const row = [rec.details.fullName, rec.details.designation, rec.details.posting, rec.details.phone];
+                dateLabels.forEach(dateStr => {
+                    const entry = perPerson[p].dates[dateStr];
+                    const dayOfWeek = getDateDayOfWeek(dateStr);
+                    if (entry) {
+                        row.push(entry.checkIn || '-');
+                        row.push(entry.checkOut || '-');
+                        let status = entry.status;
+                        if (dayOfWeek === 0) status = 'Holiday (Sun)';
+                        else if (!entry.checkIn) status = 'Absent';
+                        row.push(status);
+                    } else {
+                        if (dayOfWeek === 0) {
+                            row.push('-'); row.push('-'); row.push('Holiday (Sun)');
+                        } else {
+                            row.push('-'); row.push('-'); row.push('Absent');
+                        }
+                    }
+                });
+                dataRows.push(row);
+            }
+
+            // create workbook and worksheet
+            const wb = XLSX.utils.book_new();
+            const aoa = [headerRow1, headerRow2, ...dataRows];
+            const ws = XLSX.utils.aoa_to_sheet(aoa);
+
+            // Apply merges for date headers
+            ws['!merges'] = ws['!merges'] || [];
+            for (let i = 0; i < dateLabels.length; i++) {
+                const startCol = 4 + i * 3;
+                ws['!merges'].push({ s: { r: 0, c: startCol }, e: { r: 0, c: startCol + 2 } });
+            }
+
+            // Apply Styles
+            const colCount = aoa[0].length;
+            for (let r = 0; r < aoa.length; r++) {
+                for (let c = 0; c < colCount; c++) {
+                    const cellRef = XLSX.utils.encode_cell({ c: c, r: r });
+                    if (!ws[cellRef]) ws[cellRef] = { v: aoa[r][c] || '' };
+
+                    if (r < 2) {
+                        ws[cellRef].s = (c < 4) ? headerNameColumnStyle : headerStyle;
+                    } else {
+                        ws[cellRef].s = (c < 4) ? nameColumnStyle : cellStyle;
+                    }
+                }
+            }
+
+            // Auto column widths
+            const colWidths = new Array(colCount).fill(10);
+            for (let r = 0; r < aoa.length; r++) {
+                for (let c = 0; c < aoa[r].length; c++) {
+                    const val = aoa[r][c] ? String(aoa[r][c]) : '';
+                    colWidths[c] = Math.max(colWidths[c], Math.min(40, val.length + 2));
+                }
+            }
+            ws['!cols'] = colWidths.map(w => ({ wch: w }));
+
+            XLSX.utils.book_append_sheet(wb, ws, 'Detailed_Attendance');
+
+            // Also append daily summary sheet
+            const summaryHeader = ['Emp Name', 'Designation', 'Posting Office', 'Contact #', 'Total Days', 'Present', 'On Time', 'Late', 'Early', 'Absent', 'Sunday', 'Accuracy %'];
+            const summaryData = [summaryHeader];
+            
+            // Calculate summary data for each person
+            for (const p of persons) {
+                const rec = perPerson[p];
+                const dates = Object.keys(rec.dates);
+                
+                let onTime = 0;
+                let late = 0;
+                let early = 0;
+                let absent = 0;
+                let sunday = 0;
+                
+                for (const d of dates) {
+                    const e = rec.dates[d];
+                    if (e.status === 'On Time') onTime++;
+                    else if (e.status === 'Late') late++;
+                    else if (e.status === 'Early') early++;
+                    else if (e.status === 'Absent') absent++;
+                    else if (e.status === 'Holiday (Sun)') sunday++;
+                }
+                
+                const totalPersonDays = dates.length;
+                const present = onTime + late + early;
+                const accuracy = totalPersonDays > 0 ? Math.round((onTime / totalPersonDays) * 100) : 0;
+                
+                summaryData.push([
+                    rec.details.fullName,
+                    rec.details.designation,
+                    rec.details.posting,
+                    rec.details.phone,
+                    totalPersonDays,
+                    present,
+                    onTime,
+                    late,
+                    early,
+                    absent,
+                    sunday,
+                    accuracy + '%'
+                ]);
+            }
+            
+            const ws2 = XLSX.utils.aoa_to_sheet(summaryData);
+            
+            // Apply styles to Summary sheet
+            for (let r = 0; r < summaryData.length; r++) {
+                for (let c = 0; c < summaryHeader.length; c++) {
+                    const cellRef = XLSX.utils.encode_cell({ c: c, r: r });
+                    if (!ws2[cellRef]) ws2[cellRef] = { v: summaryData[r][c] || '' };
+                    
+                    if (r === 0) {
+                        ws2[cellRef].s = headerStyle; // Header row
+                    } else {
+                        ws2[cellRef].s = cellStyle; // Data rows
+                    }
+                }
+            }
+            
+            // Auto column widths for Summary sheet
+            const summaryColWidths = new Array(summaryHeader.length).fill(12);
+            for (let r = 0; r < summaryData.length; r++) {
+                for (let c = 0; c < summaryData[r].length; c++) {
+                    const val = summaryData[r][c] ? String(summaryData[r][c]) : '';
+                    summaryColWidths[c] = Math.max(summaryColWidths[c], Math.min(40, val.length + 2));
+                }
+            }
+            ws2['!cols'] = summaryColWidths.map(w => ({ wch: w }));
+
+            XLSX.utils.book_append_sheet(wb, ws2, 'Person_Summary');
+
+            // Also add Employee Database sheet
+            const empHeader = ['Emp Name', 'Designation', 'Posting Office', 'Contact #'];
+            const empData = [empHeader, ...employeeDatabase.map(emp => [emp.name, emp.designation, emp.posting, emp.contact])];
+            const ws3 = XLSX.utils.aoa_to_sheet(empData);
+            
+            // Apply styles to Employee sheet
+            for (let r = 0; r < empData.length; r++) {
+                for (let c = 0; c < empHeader.length; c++) {
+                    const cellRef = XLSX.utils.encode_cell({ c: c, r: r });
+                    if (!ws3[cellRef]) ws3[cellRef] = { v: empData[r][c] || '' };
+                    
+                    if (r === 0) {
+                        ws3[cellRef].s = headerStyle;
+                    } else {
+                        ws3[cellRef].s = cellStyle;
+                    }
+                }
+            }
+            
+            XLSX.utils.book_append_sheet(wb, ws3, 'Employee_Database');
+
+            // write file
+            XLSX.writeFile(wb, 'Attendance_Grouped_By_Date.xlsx');
+        }
+
+        // Main processing function - FIXED
+        document.getElementById('processBtn').addEventListener('click', () => {
+            const f = document.getElementById('chatFile').files[0];
+            if (!f) return alert('Please upload a WhatsApp exported .txt file first.');
+            
+            // Show loading indicator
+            document.getElementById('loadingIndicator').style.display = 'block';
+            
+            const reader = new FileReader();
+            reader.onload = e => {
+                try {
+                    const fileContent = e.target.result;
+                    console.log('File content loaded, length:', fileContent.length);
+                    
+                    parsedMessages = parseWhatsAppText(fileContent);
+                    console.log('Parsed messages count:', parsedMessages.length);
+                    
+                    if (parsedMessages.length === 0) {
+                        alert('No messages could be parsed from the file. Please check the file format.');
+                        document.getElementById('loadingIndicator').style.display = 'none';
+                        return;
+                    }
+                    
+                    // Build attendance data
+                    buildData(parsedMessages);
+                    
+                    // default filteredPerPerson = all perPerson
+                    filteredPerPerson = {};
+                    for (const p in perPerson) filteredPerPerson[p] = { details: perPerson[p].details, dates: { ...perPerson[p].dates } };
+                    document.getElementById('generationDate').innerText = new Date().toLocaleString();
+                    
+                    // initial render: no filters
+                    applyFilterAndRender();
+                    
+                    // Hide loading indicator
+                    document.getElementById('loadingIndicator').style.display = 'none';
+                    
+                    // Scroll to top after processing
+                    window.scrollTo({
+                        top: 0,
+                        behavior: 'smooth'
+                    });
+                    
+                    showNotification(`Successfully processed ${parsedMessages.length} messages and found ${Object.keys(perPerson).length} unique people.`);
+                } catch (err) {
+                    console.error('Error processing file:', err);
+                    alert('Error processing file: ' + err.message);
+                    // Hide loading indicator
+                    document.getElementById('loadingIndicator').style.display = 'none';
+                }
+            };
+            
+            reader.onerror = () => {
+                alert('Error reading file');
+                document.getElementById('loadingIndicator').style.display = 'none';
+            };
+            
+            reader.readAsText(f, 'UTF-8');
+        });
+
+        document.getElementById('applyBtn').addEventListener('click', applyFilterAndRender);
+        document.getElementById('exportBtn').addEventListener('click', exportExcelGrouped);
+
+        // Tabs functionality
+        document.querySelectorAll('.tab-button').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                const tab = btn.getAttribute('data-tab');
+                document.querySelectorAll('.tab-pane').forEach(p => p.style.display = 'none');
+                document.getElementById(tab).style.display = 'block';
+            });
+        });
+    </script>
+</body>
+</html>
