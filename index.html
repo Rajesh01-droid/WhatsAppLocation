@@ -7,6 +7,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Add jsPDF library for PDF export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         :root {
             --bg: #f4f7fb;
@@ -115,7 +118,6 @@
             line-height: 1.8;
             padding-right: 20px;
         }
-
 
         .time-rules {
             flex: 1;
@@ -886,7 +888,132 @@
             align-items: center;
             gap: 8px;
         }
-        
+
+        /* PDF Report Button */
+        .pdf-report-btn {
+            background: linear-gradient(90deg, #dc2626, #b91c1c);
+            color: white !important;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            white-space: nowrap;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .pdf-report-btn:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+
+        /* Performance Report Section */
+        .performance-report {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 6px 18px rgba(14, 88, 140, 0.03);
+            margin-bottom: 25px;
+        }
+
+        .performance-report-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #eef5fb;
+        }
+
+        .performance-report-header h3 {
+            color: var(--accent);
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .performance-report-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .month-overview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .month-stat {
+            background: #f8fafc;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid #eef5fb;
+        }
+
+        .month-stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 5px;
+        }
+
+        .month-stat-label {
+            font-size: 13px;
+            color: var(--muted);
+            font-weight: 600;
+        }
+
+        .trend-line-chart {
+            height: 400px;
+            margin-bottom: 25px;
+        }
+
+        /* PDF Preview Modal */
+        .pdf-preview-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 3000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .pdf-preview-content {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .pdf-preview-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #eef5fb;
+        }
+
+        .pdf-preview-body {
+            background: #f9fafb;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
         @media (max-width: 768px) {
             .container {
                 padding: 15px;
@@ -957,6 +1084,21 @@
                 flex-direction: column;
                 text-align: center;
             }
+
+            .performance-report-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+
+            .performance-report-actions {
+                width: 100%;
+                justify-content: stretch;
+            }
+
+            .performance-report-actions button {
+                flex: 1;
+            }
         }
 
         @media (max-width: 480px) {
@@ -995,6 +1137,7 @@
                 <li><strong>Process:</strong> Click Process button after file upload</li>
                 <li><strong>Apply Filter:</strong> Use filters to view specific data</li>
                 <li><strong>Export:</strong> Download Excel with detailed reports</li>
+                <li><strong>PDF Report:</strong> Download monthly performance report with charts</li>
             </ul>
             
             <div class="time-rules">
@@ -1028,12 +1171,38 @@
                 <button id="processBtn" class="btn">Process</button>
                 <button id="applyBtn" class="btn-ghost">Apply Filter</button>
                 <button id="exportBtn" class="btn-ghost">Export Excel</button>
+                <button id="pdfReportBtn" class="pdf-report-btn">
+                    <i class="fas fa-file-pdf"></i> PDF Report
+                </button>
             </div>
         </div>
 
         <div class="loading" id="loadingIndicator">
             <div class="loading-spinner"></div>
             <p>Processing data, please wait...</p>
+        </div>
+
+        <!-- Performance Report Section -->
+        <div class="performance-report" id="performanceReport" style="display: none;">
+            <div class="performance-report-header">
+                <h3><i class="fas fa-chart-line"></i> Monthly Performance Overview</h3>
+                <div class="performance-report-actions">
+                    <button id="printReportBtn" class="btn-ghost">
+                        <i class="fas fa-print"></i> Print
+                    </button>
+                    <button id="downloadPdfBtn" class="pdf-report-btn">
+                        <i class="fas fa-download"></i> Download PDF
+                    </button>
+                </div>
+            </div>
+
+            <div class="month-overview" id="monthOverview">
+                <!-- Month overview stats will be populated here -->
+            </div>
+
+            <div class="trend-line-chart">
+                <canvas id="performanceTrendChart"></canvas>
+            </div>
         </div>
 
         <div class="cards">
@@ -1093,6 +1262,7 @@
                 <button class="tab-button" data-tab="detailedTab">Detailed Attendance</button>
                 <button class="tab-button" data-tab="locationsTab">Locations</button>
                 <button class="tab-button" data-tab="employeeTab">Employee Database</button>
+                <button class="tab-button" data-tab="performanceTab">Performance Report</button>
             </div>
 
             <div class="tab-content">
@@ -1237,6 +1407,62 @@
                         </div>
                     </div>
                 </div>
+
+                <div id="performanceTab" class="tab-pane" style="display:none">
+                    <div class="performance-report">
+                        <div class="performance-report-header">
+                            <h3><i class="fas fa-chart-pie"></i> Staff Performance Analysis</h3>
+                            <div class="performance-report-actions">
+                                <button id="printPerformanceBtn" class="btn-ghost">
+                                    <i class="fas fa-print"></i> Print Report
+                                </button>
+                                <button id="downloadPerformancePdf" class="pdf-report-btn">
+                                    <i class="fas fa-file-pdf"></i> Export as PDF
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="month-overview" id="performanceMonthOverview">
+                            <!-- Performance overview will be populated here -->
+                        </div>
+                        
+                        <div style="margin: 25px 0;">
+                            <h4 style="color: var(--accent); margin-bottom: 15px;">
+                                <i class="fas fa-chart-line"></i> Attendance Trend Analysis
+                            </h4>
+                            <div class="trend-line-chart">
+                                <canvas id="performanceAnalysisChart"></canvas>
+                            </div>
+                        </div>
+                        
+                        <div class="table-container">
+                            <table id="performanceTable">
+                                <thead>
+                                    <tr>
+                                        <th>Rank</th>
+                                        <th>Employee Name</th>
+                                        <th>Designation</th>
+                                        <th>Total Days</th>
+                                        <th>Working Days</th>
+                                        <th>On Time</th>
+                                        <th>Late</th>
+                                        <th>Early</th>
+                                        <th>Accuracy %</th>
+                                        <th>Performance</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="performanceTableBody">
+                                    <tr>
+                                        <td colspan="10" class="empty-state">
+                                            <i class="fas fa-chart-bar"></i>
+                                            <p>No performance data available. Process attendance data first.</p>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -1285,13 +1511,26 @@
         </div>
     </div>
 
+    <!-- PDF Preview Modal -->
+    <div class="pdf-preview-modal" id="pdfPreviewModal">
+        <div class="pdf-preview-content">
+            <div class="pdf-preview-header">
+                <h3><i class="fas fa-file-pdf"></i> PDF Report Preview</h3>
+                <button class="close-modal" onclick="closePdfPreview()">&times;</button>
+            </div>
+            <div class="pdf-preview-body" id="pdfPreviewBody">
+                <!-- PDF preview will be generated here -->
+            </div>
+        </div>
+    </div>
+
     <button class="scroll-top" id="scrollTopBtn" title="Go to top">
         <i class="fas fa-arrow-up"></i>
     </button>
 
     <script>
         // Configuration
-        const LATE_TIME_MINS = 8 * 60 + 46; // 8:45 AM
+        const LATE_TIME_MINS = 8 * 60 + 46; // 8:46 AM
         const EARLY_TIME_MINS = 14 * 60 + 57; // 2:57 PM
         const FRIDAY_EARLY_TIME_MINS = 12 * 60 + 27; // 12:27 PM for Fridays
 
@@ -1301,7 +1540,7 @@
         let perPerson = {};
         let locationItems = [];
         let filteredPerPerson = {};
-        let stackedChart, trendChart;
+        let stackedChart, trendChart, performanceTrendChart, performanceAnalysisChart;
         let chartVisibility = {
             stacked: true,
             trend: true
@@ -1331,7 +1570,25 @@
             
             // Setup delete all button
             document.getElementById('deleteAllEmployeesBtn').addEventListener('click', deleteAllEmployees);
+            
+            // Setup PDF report button - FIXED: Proper event listeners
+            setupPdfHandlers();
         });
+
+        // Setup PDF handlers
+        function setupPdfHandlers() {
+            const pdfReportBtn = document.getElementById('pdfReportBtn');
+            const downloadPdfBtn = document.getElementById('downloadPdfBtn');
+            const printReportBtn = document.getElementById('printReportBtn');
+            const downloadPerformancePdf = document.getElementById('downloadPerformancePdf');
+            const printPerformanceBtn = document.getElementById('printPerformanceBtn');
+
+            pdfReportBtn.addEventListener('click', generatePdfReport);
+            downloadPdfBtn.addEventListener('click', downloadPdfReport);
+            printReportBtn.addEventListener('click', printReport);
+            downloadPerformancePdf.addEventListener('click', downloadPerformancePdfReport);
+            printPerformanceBtn.addEventListener('click', printPerformanceReport);
+        }
 
         // Load employee database from localStorage
         function loadEmployeeDatabase() {
@@ -1848,7 +2105,7 @@
             return updatedCount;
         }
 
-        // Calculate top 5 performers only - FIXED VERSION
+        // FIXED: Calculate top 5 performers with accurate percentage
         function calculateTopPerformers() {
             const performers = [];
             
@@ -1857,31 +2114,43 @@
                 const dates = Object.keys(rec.dates);
                 
                 let onTime = 0;
-                let totalDays = 0;
+                let late = 0;
+                let early = 0;
+                let absent = 0;
+                let sunday = 0;
                 let locationCount = 0;
                 
                 for (const d of dates) {
                     const e = rec.dates[d];
                     if (e.status === 'On Time') onTime++;
-                    if (e.status !== 'Holiday (Sun)') totalDays++;
+                    else if (e.status === 'Late') late++;
+                    else if (e.status === 'Early') early++;
+                    else if (e.status === 'Absent') absent++;
+                    else if (e.status === 'Holiday (Sun)') sunday++;
                     if (e.location) locationCount++;
                 }
                 
-                // Calculate accuracy based on on-time days
-                const accuracy = totalDays > 0 ? Math.round((onTime / totalDays) * 100) : 0;
+                // IMPORTANT: Exclude Sundays from working days calculation
+                const totalWorkingDays = dates.length - sunday;
+                
+                // Calculate accuracy: (onTime days / total working days) * 100
+                const accuracy = totalWorkingDays > 0 ? Math.round((onTime / totalWorkingDays) * 100) : 0;
                 
                 // Calculate location score (percentage of days with location shared)
-                const locationScore = totalDays > 0 ? Math.round((locationCount / totalDays) * 100) : 0;
+                const locationScore = totalWorkingDays > 0 ? Math.round((locationCount / totalWorkingDays) * 100) : 0;
                 
                 // Combined score: 70% accuracy + 30% location score
                 const combinedScore = (accuracy * 0.7) + (locationScore * 0.3);
                 
                 performers.push({
-                    name: p,
+                    name: rec.details.fullName || p,
                     onTime: onTime,
-                    totalDays: totalDays,
-                    accuracy: accuracy,
+                    totalWorkingDays: totalWorkingDays,
+                    totalDays: dates.length,
+                    sunday: sunday,
                     locationCount: locationCount,
+                    accuracy: accuracy,
+                    locationScore: locationScore,
                     combinedScore: combinedScore
                 });
             }
@@ -1902,10 +2171,10 @@
                             <div class="performer-rank" style="background: ${rankColors[index]}">${index + 1}</div>
                             <div class="performer-name">${escapeHtml(performer.name)}</div>
                             <div class="performer-stats">
-                                On Time: ${performer.onTime} / ${performer.totalDays} days
+                                On Time: ${performer.onTime} / ${performer.totalWorkingDays} days
                             </div>
                             <div class="performer-stats">
-                                Location Shared: ${performer.locationCount} days
+                                Location Shared: ${performer.locationCount} days (${performer.locationScore}%)
                             </div>
                             <div class="performer-accuracy">
                                 ${performer.accuracy}% Accuracy
@@ -2130,9 +2399,16 @@
             return `${d}/${m}/${y}`;
         }
 
+        // FIXED: Correct Sunday detection function
         function getDateDayOfWeek(dateKey) {
-            const [dd, mm, yy] = dateKey.split('/').map(Number);
-            return new Date(yy, mm - 1, dd).getDay();
+            try {
+                const [dd, mm, yy] = dateKey.split('/').map(Number);
+                const date = new Date(yy, mm - 1, dd);
+                return date.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+            } catch (e) {
+                console.error('Error getting day of week for:', dateKey, e);
+                return 1; // Default to Monday if error
+            }
         }
 
         // FIXED WhatsApp parsing function
@@ -2152,17 +2428,11 @@
             
             // Enhanced message patterns for better WhatsApp format detection
             const patterns = [
-                // Pattern for: 03/04/2024, 8:30 AM - Dr. Nargis Lashari: Message
                 /^(\d{1,2}[\/\-.]\d{1,2}[\/\-.]\d{2,4})[, ]+\s*(\d{1,2}:\d{2}(?::\d{2})?\s*(?:AM|PM|am|pm)?)\s*-\s*([^:]+):\s*(.*)$/,
-                // Pattern for: [03/04/2024, 8:30] Dr. Nargis Lashari: Message
                 /^\[?(\d{1,2}[\/\-.]\d{1,2}[\/\-.]\d{2,4})[, ]+\s*(\d{1,2}:\d{2}(?::\d{2})?)\]?\s*([^:]+):\s*(.*)$/,
-                // Pattern for: 03/04/2024 8:30 - Dr. Nargis Lashari: Message
                 /^(\d{1,2}[\/\-.]\d{1,2}[\/\-.]\d{2,4})\s+(\d{1,2}:\d{2}(?::\d{2})?)\s*-\s*([^:]+):\s*(.*)$/,
-                // Pattern for: 03/04/2024, 8:30 AM - Dr. Nargis Lashari: Message
                 /^(\d{1,2}[\/\-.]\d{1,2}[\/\-.]\d{2,4})\s*,\s*(\d{1,2}:\d{2}(?::\d{2})?\s*(?:AM|PM)?)\s*-\s*([^:]+):\s*(.*)$/i,
-                // Pattern for: 03-04-2024, 8:30 - Dr. Nargis Lashari: Message
                 /^(\d{1,2}-\d{1,2}-\d{2,4})[, ]+\s*(\d{1,2}:\d{2}(?::\d{2})?\s*(?:AM|PM|am|pm)?)\s*-\s*([^:]+):\s*(.*)$/,
-                // Pattern for: 03.04.2024, 8:30 - Dr. Nargis Lashari: Message
                 /^(\d{1,2}\.\d{1,2}\.\d{2,4})[, ]+\s*(\d{1,2}:\d{2}(?::\d{2})?\s*(?:AM|PM|am|pm)?)\s*-\s*([^:]+):\s*(.*)$/
             ];
             
@@ -2215,13 +2485,10 @@
             
             if (buffer) msgs.push(buffer);
             
-            // Debug: Show parsed messages in console
-            console.log('Parsed messages:', msgs);
-            
             return msgs;
         }
 
-        // Build per-person records & locations
+        // Build per-person records & locations - FIXED SUNDAY DETECTION
         function buildData(messages) {
             perPerson = {};
             locationItems = [];
@@ -2325,14 +2592,17 @@
                 }
             });
 
-            // Calculate status for each entry
+            // Calculate status for each entry - FIXED Sunday detection
             for (const p in perPerson) {
                 for (const d in perPerson[p].dates) {
                     const e = perPerson[p].dates[d];
-                    const dayOfWeek = getDateDayOfWeek(d); // 0 = Sunday, 5 = Friday
+                    const dayOfWeek = getDateDayOfWeek(d); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
                     
+                    // FIXED: Proper Sunday detection - Sunday is 0
                     if (dayOfWeek === 0) {
                         e.status = 'Holiday (Sun)';
+                        // Keep check-in/check-out data if available (for Sunday work)
+                        // But mark as holiday
                     } else if (!e.checkIn) {
                         e.status = 'Absent';
                     } else {
@@ -2356,7 +2626,7 @@
             console.log('Built perPerson data:', perPerson);
         }
 
-        // Filtering and rendering
+        // FIXED: Filtering and rendering with correct Sunday counting
         function applyFilterAndRender() {
             const start = document.getElementById('startDate').value;
             const end = document.getElementById('endDate').value;
@@ -2370,6 +2640,7 @@
                     const [dd, mm, yy] = d.split('/').map(Number);
                     const dt = new Date(yy, mm - 1, dd, 0, 0, 0);
                     let dateOk = true;
+                    
                     if (start && !end) {
                         const s = new Date(start + 'T00:00:00'), e = new Date(start + 'T23:59:59');
                         dateOk = (dt >= s && dt <= e);
@@ -2377,6 +2648,7 @@
                         const s = new Date(start + 'T00:00:00'), e = new Date(end + 'T23:59:59');
                         dateOk = (dt >= s && dt <= e);
                     }
+                    
                     if (!dateOk) continue;
                     const entry = perPerson[p].dates[d];
                     if (status && entry.status !== status) continue;
@@ -2395,6 +2667,7 @@
             renderAttendanceTable();
             renderDailySummary();
             renderLocations();
+            renderPerformanceReport();
             updateCards();
             drawCharts();
             calculateTopPerformers();
@@ -2448,6 +2721,7 @@
             }
         }
 
+        // FIXED: Render daily summary with correct Sunday counting
         function renderDailySummary() {
             const tbody = document.querySelector('#dailySummaryTable tbody');
             tbody.innerHTML = '';
@@ -2493,7 +2767,9 @@
             document.getElementById('totalOnTime').innerText = totalOnTime;
             document.getElementById('totalAbsent').innerText = totalAbsent;
             
-            // Render summary statistics
+            // Render summary statistics - EXCLUDE Sundays from working days for percentage calculations
+            const totalWorkingDays = totalDays - totalSunday;
+            
             summaryStats.innerHTML = `
                 <div class="summary-stat" data-filter="all">
                     <div class="summary-stat-value">${totalDays}</div>
@@ -2502,27 +2778,27 @@
                 <div class="summary-stat" data-filter="present">
                     <div class="summary-stat-value">${totalPresent}</div>
                     <div class="summary-stat-label">Present</div>
-                    <div class="summary-stat-percent percent-positive">${totalDays > 0 ? Math.round((totalPresent / totalDays) * 100) : 0}%</div>
+                    <div class="summary-stat-percent percent-positive">${totalWorkingDays > 0 ? Math.round((totalPresent / totalWorkingDays) * 100) : 0}%</div>
                 </div>
                 <div class="summary-stat" data-filter="onTime">
                     <div class="summary-stat-value">${totalOnTime}</div>
                     <div class="summary-stat-label">On Time</div>
-                    <div class="summary-stat-percent percent-positive">${totalDays > 0 ? Math.round((totalOnTime / totalDays) * 100) : 0}%</div>
+                    <div class="summary-stat-percent percent-positive">${totalWorkingDays > 0 ? Math.round((totalOnTime / totalWorkingDays) * 100) : 0}%</div>
                 </div>
                 <div class="summary-stat" data-filter="late">
                     <div class="summary-stat-value">${totalLate}</div>
                     <div class="summary-stat-label">Late</div>
-                    <div class="summary-stat-percent percent-negative">${totalDays > 0 ? Math.round((totalLate / totalDays) * 100) : 0}%</div>
+                    <div class="summary-stat-percent percent-negative">${totalWorkingDays > 0 ? Math.round((totalLate / totalWorkingDays) * 100) : 0}%</div>
                 </div>
                 <div class="summary-stat" data-filter="early">
                     <div class="summary-stat-value">${totalEarly}</div>
                     <div class="summary-stat-label">Early</div>
-                    <div class="summary-stat-percent percent-negative">${totalDays > 0 ? Math.round((totalEarly / totalDays) * 100) : 0}%</div>
+                    <div class="summary-stat-percent percent-negative">${totalWorkingDays > 0 ? Math.round((totalEarly / totalWorkingDays) * 100) : 0}%</div>
                 </div>
                 <div class="summary-stat" data-filter="absent">
                     <div class="summary-stat-value">${totalAbsent}</div>
                     <div class="summary-stat-label">Absent</div>
-                    <div class="summary-stat-percent percent-negative">${totalDays > 0 ? Math.round((totalAbsent / totalDays) * 100) : 0}%</div>
+                    <div class="summary-stat-percent percent-negative">${totalWorkingDays > 0 ? Math.round((totalAbsent / totalWorkingDays) * 100) : 0}%</div>
                 </div>
                 <div class="summary-stat" data-filter="sunday">
                     <div class="summary-stat-value">${totalSunday}</div>
@@ -2552,8 +2828,11 @@
                 }
                 
                 const totalPersonDays = dates.length;
+                const totalPersonWorkingDays = totalPersonDays - sunday;
                 const present = onTime + late + early;
-                const accuracy = totalPersonDays > 0 ? Math.round((onTime / totalPersonDays) * 100) : 0;
+                
+                // FIXED: Accuracy calculation should exclude Sundays
+                const accuracy = totalPersonWorkingDays > 0 ? Math.round((onTime / totalPersonWorkingDays) * 100) : 0;
                 
                 tbody.insertAdjacentHTML('beforeend', `<tr>
                     <td>${escapeHtml(rec.details.fullName)}</td>
@@ -2613,6 +2892,342 @@
                     <td>${escapeHtml(it.placeText)}</td>
                     <td>${linkHtml}</td>
                 </tr>`);
+            });
+        }
+
+        // Render Performance Report
+        function renderPerformanceReport() {
+            const persons = Object.keys(filteredPerPerson).sort((a, b) => a.localeCompare(b));
+            
+            if (persons.length === 0) {
+                document.getElementById('performanceReport').style.display = 'none';
+                return;
+            }
+            
+            // Calculate month overview
+            const start = document.getElementById('startDate').value;
+            const end = document.getElementById('endDate').value;
+            
+            let totalDaysInRange = 0;
+            let sundaysInRange = 0;
+            
+            if (start && end) {
+                const s = new Date(start + 'T00:00:00');
+                const e = new Date(end + 'T23:59:59');
+                
+                // Count total days and Sundays in range
+                for (let d = new Date(s); d <= e; d.setDate(d.getDate() + 1)) {
+                    totalDaysInRange++;
+                    if (d.getDay() === 0) sundaysInRange++;
+                }
+            } else {
+                // Count from data
+                const allDates = new Set();
+                for (const p in filteredPerPerson) {
+                    for (const d in filteredPerPerson[p].dates) {
+                        allDates.add(d);
+                    }
+                }
+                totalDaysInRange = allDates.size;
+                
+                // Count Sundays in the data
+                for (const dateStr of allDates) {
+                    if (getDateDayOfWeek(dateStr) === 0) {
+                        sundaysInRange++;
+                    }
+                }
+            }
+            
+            const workingDaysInRange = totalDaysInRange - sundaysInRange;
+            
+            // Calculate overall statistics for the range
+            let totalOnTime = 0;
+            let totalLate = 0;
+            let totalEarly = 0;
+            let totalAbsent = 0;
+            let totalSunday = 0;
+            
+            for (const p of persons) {
+                const rec = filteredPerPerson[p];
+                const dates = Object.keys(rec.dates);
+                
+                for (const d of dates) {
+                    const e = rec.dates[d];
+                    if (e.status === 'On Time') totalOnTime++;
+                    else if (e.status === 'Late') totalLate++;
+                    else if (e.status === 'Early') totalEarly++;
+                    else if (e.status === 'Absent') totalAbsent++;
+                    else if (e.status === 'Holiday (Sun)') totalSunday++;
+                }
+            }
+            
+            const totalPresent = totalOnTime + totalLate + totalEarly;
+            const overallAccuracy = workingDaysInRange > 0 ? Math.round((totalOnTime / workingDaysInRange) * 100) : 0;
+            
+            // Update month overview
+            const monthOverview = document.getElementById('monthOverview');
+            monthOverview.innerHTML = `
+                <div class="month-stat">
+                    <div class="month-stat-value">${persons.length}</div>
+                    <div class="month-stat-label">Total Staff</div>
+                </div>
+                <div class="month-stat">
+                    <div class="month-stat-value">${totalDaysInRange}</div>
+                    <div class="month-stat-label">Total Days</div>
+                </div>
+                <div class="month-stat">
+                    <div class="month-stat-value">${workingDaysInRange}</div>
+                    <div class="month-stat-label">Working Days</div>
+                </div>
+                <div class="month-stat">
+                    <div class="month-stat-value">${sundaysInRange}</div>
+                    <div class="month-stat-label">Sundays</div>
+                </div>
+                <div class="month-stat">
+                    <div class="month-stat-value">${totalPresent}</div>
+                    <div class="month-stat-label">Present Days</div>
+                </div>
+                <div class="month-stat">
+                    <div class="month-stat-value">${totalOnTime}</div>
+                    <div class="month-stat-label">On Time Days</div>
+                </div>
+                <div class="month-stat">
+                    <div class="month-stat-value">${overallAccuracy}%</div>
+                    <div class="month-stat-label">Overall Accuracy</div>
+                </div>
+            `;
+            
+            // Show performance report
+            document.getElementById('performanceReport').style.display = 'block';
+            
+            // Update performance tab content
+            updatePerformanceTab();
+        }
+
+        // Update Performance Tab
+        function updatePerformanceTab() {
+            const persons = Object.keys(filteredPerPerson).sort((a, b) => a.localeCompare(b));
+            const tbody = document.getElementById('performanceTableBody');
+            const monthOverview = document.getElementById('performanceMonthOverview');
+            
+            if (persons.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="10" class="empty-state"><i class="fas fa-chart-bar"></i><p>No performance data available. Process attendance data first.</p></td></tr>`;
+                return;
+            }
+            
+            // Calculate statistics for performance ranking
+            const performers = [];
+            
+            for (const p of persons) {
+                const rec = filteredPerPerson[p];
+                const dates = Object.keys(rec.dates);
+                
+                let onTime = 0;
+                let late = 0;
+                let early = 0;
+                let absent = 0;
+                let sunday = 0;
+                
+                for (const d of dates) {
+                    const e = rec.dates[d];
+                    if (e.status === 'On Time') onTime++;
+                    else if (e.status === 'Late') late++;
+                    else if (e.status === 'Early') early++;
+                    else if (e.status === 'Absent') absent++;
+                    else if (e.status === 'Holiday (Sun)') sunday++;
+                }
+                
+                const totalPersonDays = dates.length;
+                const totalWorkingDays = totalPersonDays - sunday;
+                const accuracy = totalWorkingDays > 0 ? Math.round((onTime / totalWorkingDays) * 100) : 0;
+                
+                performers.push({
+                    name: rec.details.fullName,
+                    designation: rec.details.designation,
+                    totalDays: totalPersonDays,
+                    workingDays: totalWorkingDays,
+                    onTime: onTime,
+                    late: late,
+                    early: early,
+                    accuracy: accuracy,
+                    performance: getPerformanceLevel(accuracy)
+                });
+            }
+            
+            // Sort by accuracy (descending)
+            performers.sort((a, b) => b.accuracy - a.accuracy);
+            
+            // Render performance table
+            tbody.innerHTML = '';
+            performers.forEach((performer, index) => {
+                const performanceClass = getPerformanceClass(performer.accuracy);
+                tbody.innerHTML += `
+                    <tr>
+                        <td><strong>${index + 1}</strong></td>
+                        <td>${escapeHtml(performer.name)}</td>
+                        <td>${escapeHtml(performer.designation)}</td>
+                        <td>${performer.totalDays}</td>
+                        <td>${performer.workingDays}</td>
+                        <td>${performer.onTime}</td>
+                        <td>${performer.late}</td>
+                        <td>${performer.early}</td>
+                        <td><strong class="${performanceClass}">${performer.accuracy}%</strong></td>
+                        <td><span class="status-${performer.performance === 'Excellent' ? 'on' : performer.performance === 'Good' ? 'on' : performer.performance === 'Average' ? 'late' : 'early'}">${performer.performance}</span></td>
+                    </tr>
+                `;
+            });
+            
+            // Update month overview in performance tab
+            const start = document.getElementById('startDate').value;
+            const end = document.getElementById('endDate').value;
+            
+            let totalDays = 0;
+            let sundays = 0;
+            
+            // Count days in range
+            if (start && end) {
+                const s = new Date(start + 'T00:00:00');
+                const e = new Date(end + 'T23:59:59');
+                
+                for (let d = new Date(s); d <= e; d.setDate(d.getDate() + 1)) {
+                    totalDays++;
+                    if (d.getDay() === 0) sundays++;
+                }
+            }
+            
+            const workingDays = totalDays - sundays;
+            
+            monthOverview.innerHTML = `
+                <div class="month-stat">
+                    <div class="month-stat-value">${performers.length}</div>
+                    <div class="month-stat-label">Total Employees</div>
+                </div>
+                <div class="month-stat">
+                    <div class="month-stat-value">${totalDays}</div>
+                    <div class="month-stat-label">Reporting Period</div>
+                </div>
+                <div class="month-stat">
+                    <div class="month-stat-value">${workingDays}</div>
+                    <div class="month-stat-label">Working Days</div>
+                </div>
+                <div class="month-stat">
+                    <div class="month-stat-value">${sundays}</div>
+                    <div class="month-stat-label">Sundays</div>
+                </div>
+                <div class="month-stat">
+                    <div class="month-stat-value">${performers[0]?.accuracy || 0}%</div>
+                    <div class="month-stat-label">Top Accuracy</div>
+                </div>
+                <div class="month-stat">
+                    <div class="month-stat-value">${performers[performers.length - 1]?.accuracy || 0}%</div>
+                    <div class="month-stat-label">Lowest Accuracy</div>
+                </div>
+            `;
+            
+            // Draw performance analysis chart
+            drawPerformanceAnalysisChart(performers);
+        }
+
+        function getPerformanceLevel(accuracy) {
+            if (accuracy >= 90) return 'Excellent';
+            if (accuracy >= 70) return 'Good';
+            if (accuracy >= 50) return 'Average';
+            if (accuracy >= 30) return 'Needs Improvement';
+            return 'Poor';
+        }
+
+        function getPerformanceClass(accuracy) {
+            if (accuracy >= 90) return 'percent-positive';
+            if (accuracy >= 70) return 'percent-positive';
+            if (accuracy >= 50) return '';
+            if (accuracy >= 30) return 'percent-negative';
+            return 'percent-negative';
+        }
+
+        function drawPerformanceAnalysisChart(performers) {
+            if (performanceAnalysisChart) {
+                performanceAnalysisChart.destroy();
+            }
+            
+            const ctx = document.getElementById('performanceAnalysisChart').getContext('2d');
+            const labels = performers.slice(0, 10).map(p => p.name.substring(0, 15) + (p.name.length > 15 ? '...' : ''));
+            const accuracyData = performers.slice(0, 10).map(p => p.accuracy);
+            const onTimeData = performers.slice(0, 10).map(p => p.onTime);
+            
+            performanceAnalysisChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Accuracy %',
+                            data: accuracyData,
+                            backgroundColor: 'rgba(22, 163, 74, 0.7)',
+                            borderColor: 'rgba(22, 163, 74, 1)',
+                            borderWidth: 1,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'On Time Days',
+                            data: onTimeData,
+                            backgroundColor: 'rgba(59, 130, 246, 0.7)',
+                            borderColor: 'rgba(59, 130, 246, 1)',
+                            borderWidth: 1,
+                            yAxisID: 'y1',
+                            type: 'line',
+                            fill: false,
+                            tension: 0.3
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Top 10 Performers - Accuracy vs On Time Days',
+                            font: {
+                                size: 16
+                            }
+                        },
+                        legend: {
+                            position: 'bottom'
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: {
+                                maxRotation: 45,
+                                minRotation: 45
+                            }
+                        },
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: {
+                                display: true,
+                                text: 'Accuracy %'
+                            },
+                            min: 0,
+                            max: 100
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            title: {
+                                display: true,
+                                text: 'On Time Days'
+                            },
+                            min: 0,
+                            grid: {
+                                drawOnChartArea: false
+                            }
+                        }
+                    }
+                }
             });
         }
 
@@ -2783,6 +3398,145 @@
                 trendCtx.textAlign = 'center';
                 trendCtx.fillText('Chart is hidden', trendCanvas.width / 2, trendCanvas.height / 2);
             }
+            
+            // Draw performance trend chart
+            drawPerformanceTrendChart();
+        }
+
+        function drawPerformanceTrendChart() {
+            if (performanceTrendChart) {
+                performanceTrendChart.destroy();
+            }
+            
+            const ctx = document.getElementById('performanceTrendChart').getContext('2d');
+            
+            // Get all dates from filtered data
+            const allDates = new Set();
+            for (const p in filteredPerPerson) {
+                for (const d in filteredPerPerson[p].dates) {
+                    allDates.add(d);
+                }
+            }
+            
+            // Sort dates
+            const sortedDates = Array.from(allDates).sort((a, b) => {
+                const [da, ma, ya] = a.split('/').map(Number);
+                const [db, mb, yb] = b.split('/').map(Number);
+                return new Date(ya, ma - 1, da) - new Date(yb, mb - 1, db);
+            });
+            
+            // Calculate daily on-time percentage
+            const dailyOnTime = [];
+            const dailyAttendance = [];
+            
+            sortedDates.forEach(date => {
+                let onTimeCount = 0;
+                let totalCount = 0;
+                
+                for (const p in filteredPerPerson) {
+                    if (filteredPerPerson[p].dates[date]) {
+                        totalCount++;
+                        if (filteredPerPerson[p].dates[date].status === 'On Time') {
+                            onTimeCount++;
+                        }
+                    }
+                }
+                
+                const percentage = totalCount > 0 ? Math.round((onTimeCount / totalCount) * 100) : 0;
+                dailyOnTime.push(percentage);
+                dailyAttendance.push(totalCount);
+            });
+            
+            // Format dates for display
+            const formattedDates = sortedDates.map(d => {
+                const [dd, mm, yy] = d.split('/').map(Number);
+                return `${dd}/${mm}`;
+            });
+            
+            performanceTrendChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: formattedDates,
+                    datasets: [
+                        {
+                            label: 'On-Time Percentage',
+                            data: dailyOnTime,
+                            borderColor: '#16a34a',
+                            backgroundColor: 'rgba(22, 163, 74, 0.1)',
+                            fill: true,
+                            tension: 0.3,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Daily Attendance',
+                            data: dailyAttendance,
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            fill: true,
+                            tension: 0.3,
+                            yAxisID: 'y1',
+                            borderDash: [5, 5]
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Daily On-Time Performance Trend',
+                            font: {
+                                size: 16
+                            }
+                        },
+                        legend: {
+                            position: 'bottom'
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Date'
+                            },
+                            ticks: {
+                                maxRotation: 45,
+                                minRotation: 45
+                            }
+                        },
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: {
+                                display: true,
+                                text: 'On-Time %'
+                            },
+                            min: 0,
+                            max: 100,
+                            ticks: {
+                                callback: function(value) {
+                                    return value + '%';
+                                }
+                            }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            title: {
+                                display: true,
+                                text: 'Attendance Count'
+                            },
+                            min: 0,
+                            grid: {
+                                drawOnChartArea: false
+                            }
+                        }
+                    }
+                }
+            });
         }
 
         // Excel export
@@ -2902,8 +3656,8 @@
 
             XLSX.utils.book_append_sheet(wb, ws, 'Detailed_Attendance');
 
-            // Also append daily summary sheet
-            const summaryHeader = ['Emp Name', 'Designation', 'Posting Office', 'Contact #', 'Total Days', 'Present', 'On Time', 'Late', 'Early', 'Absent', 'Sunday', 'Accuracy %'];
+            // Also append daily summary sheet - FIXED to exclude Sundays from accuracy calculation
+            const summaryHeader = ['Emp Name', 'Designation', 'Posting Office', 'Contact #', 'Total Days', 'Present', 'On Time', 'Late', 'Early', 'Absent', 'Sunday', 'Working Days', 'Accuracy %'];
             const summaryData = [summaryHeader];
             
             // Calculate summary data for each person
@@ -2927,8 +3681,9 @@
                 }
                 
                 const totalPersonDays = dates.length;
+                const totalWorkingDays = totalPersonDays - sunday;
                 const present = onTime + late + early;
-                const accuracy = totalPersonDays > 0 ? Math.round((onTime / totalPersonDays) * 100) : 0;
+                const accuracy = totalWorkingDays > 0 ? Math.round((onTime / totalWorkingDays) * 100) : 0;
                 
                 summaryData.push([
                     rec.details.fullName,
@@ -2942,6 +3697,7 @@
                     early,
                     absent,
                     sunday,
+                    totalWorkingDays,
                     accuracy + '%'
                 ]);
             }
@@ -2997,6 +3753,338 @@
 
             // write file
             XLSX.writeFile(wb, 'Attendance_Grouped_By_Date.xlsx');
+        }
+
+        // PDF Report Functions - FIXED DOWNLOAD ISSUE
+        function generatePdfReport() {
+            if (Object.keys(filteredPerPerson).length === 0) {
+                alert('No data available to generate PDF report. Please process attendance data first.');
+                return;
+            }
+            
+            showNotification('Generating PDF report...');
+            
+            // Show performance report if hidden
+            document.getElementById('performanceReport').style.display = 'block';
+            
+            // Scroll to performance report
+            document.getElementById('performanceReport').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // FIXED: PDF Download Function
+        function downloadPdfReport() {
+            if (Object.keys(filteredPerPerson).length === 0) {
+                alert('No data available to generate PDF report. Please process attendance data first.');
+                return;
+            }
+            
+            showNotification('Creating PDF, please wait...');
+            
+            // Create a temporary div for PDF generation
+            const tempDiv = document.createElement('div');
+            tempDiv.style.position = 'absolute';
+            tempDiv.style.left = '-9999px';
+            tempDiv.style.width = '800px';
+            tempDiv.style.backgroundColor = 'white';
+            tempDiv.style.padding = '20px';
+            
+            // Get report data
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            const persons = Object.keys(filteredPerPerson).length;
+            
+            // Calculate statistics
+            let totalDays = 0;
+            let totalOnTime = 0;
+            let totalLate = 0;
+            let totalEarly = 0;
+            let totalAbsent = 0;
+            let totalSunday = 0;
+            
+            for (const p in filteredPerPerson) {
+                const rec = filteredPerPerson[p];
+                const dates = Object.keys(rec.dates);
+                totalDays += dates.length;
+                
+                for (const d of dates) {
+                    const e = rec.dates[d];
+                    if (e.status === 'On Time') totalOnTime++;
+                    else if (e.status === 'Late') totalLate++;
+                    else if (e.status === 'Early') totalEarly++;
+                    else if (e.status === 'Absent') totalAbsent++;
+                    else if (e.status === 'Holiday (Sun)') totalSunday++;
+                }
+            }
+            
+            const totalWorkingDays = totalDays - totalSunday;
+            const totalPresent = totalOnTime + totalLate + totalEarly;
+            const overallAccuracy = totalWorkingDays > 0 ? Math.round((totalOnTime / totalWorkingDays) * 100) : 0;
+            
+            // Create PDF content
+            tempDiv.innerHTML = `
+                <div style="font-family: Arial, sans-serif;">
+                    <h1 style="color: #0e588c; text-align: center; border-bottom: 2px solid #0e588c; padding-bottom: 10px;">
+                        Attendance Performance Report
+                    </h1>
+                    <div style="margin: 20px 0;">
+                        <p><strong>Report Period:</strong> ${startDate} to ${endDate}</p>
+                        <p><strong>Generated On:</strong> ${new Date().toLocaleString()}</p>
+                        <p><strong>Total Employees:</strong> ${persons}</p>
+                    </div>
+                    
+                    <h2 style="color: #0e588c; border-bottom: 1px solid #ddd; padding-bottom: 5px;">Monthly Overview</h2>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 20px 0;">
+                        <div style="border: 1px solid #ddd; padding: 15px; text-align: center;">
+                            <div style="font-size: 24px; font-weight: bold; color: #0e588c;">${totalDays}</div>
+                            <div style="font-size: 14px; color: #666;">Total Days</div>
+                        </div>
+                        <div style="border: 1px solid #ddd; padding: 15px; text-align: center;">
+                            <div style="font-size: 24px; font-weight: bold; color: #0e588c;">${totalWorkingDays}</div>
+                            <div style="font-size: 14px; color: #666;">Working Days</div>
+                        </div>
+                        <div style="border: 1px solid #ddd; padding: 15px; text-align: center;">
+                            <div style="font-size: 24px; font-weight: bold; color: #0e588c;">${totalSunday}</div>
+                            <div style="font-size: 14px; color: #666;">Sundays</div>
+                        </div>
+                        <div style="border: 1px solid #ddd; padding: 15px; text-align: center;">
+                            <div style="font-size: 24px; font-weight: bold; color: #0e588c;">${totalPresent}</div>
+                            <div style="font-size: 14px; color: #666;">Present Days</div>
+                        </div>
+                        <div style="border: 1px solid #ddd; padding: 15px; text-align: center;">
+                            <div style="font-size: 24px; font-weight: bold; color: #0e588c;">${totalOnTime}</div>
+                            <div style="font-size: 14px; color: #666;">On Time Days</div>
+                        </div>
+                        <div style="border: 1px solid #ddd; padding: 15px; text-align: center;">
+                            <div style="font-size: 24px; font-weight: bold; color: #0e588c;">${overallAccuracy}%</div>
+                            <div style="font-size: 14px; color: #666;">Overall Accuracy</div>
+                        </div>
+                    </div>
+                    
+                    <h2 style="color: #0e588c; border-bottom: 1px solid #ddd; padding-bottom: 5px;">Top 5 Performers</h2>
+                    <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+                        <thead>
+                            <tr style="background-color: #0e588c; color: white;">
+                                <th style="padding: 10px; text-align: left;">Rank</th>
+                                <th style="padding: 10px; text-align: left;">Employee</th>
+                                <th style="padding: 10px; text-align: left;">On Time</th>
+                                <th style="padding: 10px; text-align: left;">Working Days</th>
+                                <th style="padding: 10px; text-align: left;">Accuracy</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${getTopPerformersHtml()}
+                        </tbody>
+                    </table>
+                    
+                    <h2 style="color: #0e588c; border-bottom: 1px solid #ddd; padding-bottom: 5px;">Summary Statistics</h2>
+                    <div style="margin: 20px 0;">
+                        <p><strong>On Time Rate:</strong> ${totalWorkingDays > 0 ? Math.round((totalOnTime / totalWorkingDays) * 100) : 0}%</p>
+                        <p><strong>Late Rate:</strong> ${totalWorkingDays > 0 ? Math.round((totalLate / totalWorkingDays) * 100) : 0}%</p>
+                        <p><strong>Early Leave Rate:</strong> ${totalWorkingDays > 0 ? Math.round((totalEarly / totalWorkingDays) * 100) : 0}%</p>
+                        <p><strong>Absenteeism Rate:</strong> ${totalWorkingDays > 0 ? Math.round((totalAbsent / totalWorkingDays) * 100) : 0}%</p>
+                    </div>
+                    
+                    <div style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #0e588c; text-align: center; color: #666; font-size: 12px;">
+                        <p>Generated by Attendance & Location Dashboard</p>
+                        <p>Developed by Rajesh Kumar | +92.332.2463588</p>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(tempDiv);
+            
+            // Use html2canvas to create image
+            html2canvas(tempDiv, {
+                scale: 2,
+                useCORS: true,
+                logging: false,
+                backgroundColor: '#ffffff'
+            }).then(canvas => {
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                
+                const imgWidth = 190;
+                const imgHeight = canvas.height * imgWidth / canvas.width;
+                
+                pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
+                
+                const fileName = `Attendance_Report_${startDate}_to_${endDate}.pdf`;
+                pdf.save(fileName);
+                
+                // Clean up
+                document.body.removeChild(tempDiv);
+                
+                showNotification('PDF report downloaded successfully!');
+            }).catch(error => {
+                console.error('Error generating PDF:', error);
+                document.body.removeChild(tempDiv);
+                showNotification('Error generating PDF. Please try again.', 'error');
+            });
+        }
+
+        function getTopPerformersHtml() {
+            const performers = [];
+            
+            for (const p in filteredPerPerson) {
+                const rec = filteredPerPerson[p];
+                const dates = Object.keys(rec.dates);
+                
+                let onTime = 0;
+                let late = 0;
+                let early = 0;
+                let absent = 0;
+                let sunday = 0;
+                
+                for (const d of dates) {
+                    const e = rec.dates[d];
+                    if (e.status === 'On Time') onTime++;
+                    else if (e.status === 'Late') late++;
+                    else if (e.status === 'Early') early++;
+                    else if (e.status === 'Absent') absent++;
+                    else if (e.status === 'Holiday (Sun)') sunday++;
+                }
+                
+                const totalWorkingDays = dates.length - sunday;
+                const accuracy = totalWorkingDays > 0 ? Math.round((onTime / totalWorkingDays) * 100) : 0;
+                
+                performers.push({
+                    name: rec.details.fullName || p,
+                    onTime: onTime,
+                    workingDays: totalWorkingDays,
+                    accuracy: accuracy
+                });
+            }
+            
+            // Sort by accuracy (descending)
+            performers.sort((a, b) => b.accuracy - a.accuracy);
+            const topPerformers = performers.slice(0, 5);
+            
+            let html = '';
+            topPerformers.forEach((performer, index) => {
+                html += `
+                    <tr style="border-bottom: 1px solid #ddd;">
+                        <td style="padding: 10px;">${index + 1}</td>
+                        <td style="padding: 10px;">${escapeHtml(performer.name)}</td>
+                        <td style="padding: 10px;">${performer.onTime}</td>
+                        <td style="padding: 10px;">${performer.workingDays}</td>
+                        <td style="padding: 10px; font-weight: bold; color: ${performer.accuracy >= 70 ? '#16a34a' : performer.accuracy >= 50 ? '#f59e0b' : '#ef4444'}">
+                            ${performer.accuracy}%
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            return html;
+        }
+
+        function downloadPerformancePdfReport() {
+            // Switch to performance tab first
+            document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+            document.querySelector('[data-tab="performanceTab"]').classList.add('active');
+            document.querySelectorAll('.tab-pane').forEach(p => p.style.display = 'none');
+            document.getElementById('performanceTab').style.display = 'block';
+            
+            // Wait for tab to be visible
+            setTimeout(() => {
+                const element = document.getElementById('performanceTab');
+                
+                showNotification('Creating Performance PDF...');
+                
+                html2canvas(element, {
+                    scale: 2,
+                    useCORS: true,
+                    logging: false,
+                    backgroundColor: '#ffffff'
+                }).then(canvas => {
+                    const imgData = canvas.toDataURL('image/png');
+                    const pdf = new jsPDF('p', 'mm', 'a4');
+                    const imgWidth = 190;
+                    const pageHeight = 295;
+                    const imgHeight = canvas.height * imgWidth / canvas.width;
+                    let heightLeft = imgHeight;
+                    let position = 10;
+                    
+                    pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+                    heightLeft -= pageHeight;
+                    
+                    // Add additional pages if needed
+                    while (heightLeft >= 0) {
+                        position = heightLeft - imgHeight;
+                        pdf.addPage();
+                        pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+                        heightLeft -= pageHeight;
+                    }
+                    
+                    const startDate = document.getElementById('startDate').value;
+                    const endDate = document.getElementById('endDate').value;
+                    const fileName = `Performance_Analysis_${startDate}_to_${endDate}.pdf`;
+                    
+                    pdf.save(fileName);
+                    showNotification('Performance PDF downloaded successfully!');
+                }).catch(error => {
+                    console.error('Error generating Performance PDF:', error);
+                    showNotification('Error generating Performance PDF', 'error');
+                });
+            }, 500);
+        }
+
+        function printReport() {
+            const printContent = document.getElementById('performanceReport').innerHTML;
+            const originalContent = document.body.innerHTML;
+            
+            document.body.innerHTML = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Attendance Report</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; margin: 20px; }
+                        h1 { color: #0e588c; }
+                        .month-overview { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin: 20px 0; }
+                        .month-stat { border: 1px solid #ddd; padding: 15px; text-align: center; }
+                        .month-stat-value { font-size: 24px; font-weight: bold; color: #0e588c; }
+                        .month-stat-label { font-size: 14px; color: #666; }
+                        canvas { max-width: 100%; }
+                        @media print {
+                            .no-print { display: none; }
+                            body { margin: 0; padding: 10px; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <h1>Attendance Performance Report</h1>
+                    <p>Generated on: ${new Date().toLocaleString()}</p>
+                    <p>Date Range: ${document.getElementById('startDate').value} to ${document.getElementById('endDate').value}</p>
+                    ${printContent}
+                    <div class="no-print">
+                        <button onclick="window.print()" style="padding: 10px 20px; background: #0e588c; color: white; border: none; border-radius: 5px; cursor: pointer; margin: 20px;">Print Report</button>
+                        <button onclick="window.close()" style="padding: 10px 20px; background: #666; color: white; border: none; border-radius: 5px; cursor: pointer;">Close</button>
+                    </div>
+                    <script>
+                        window.onload = function() {
+                            window.print();
+                        }
+                    <\/script>
+                </body>
+                </html>
+            `;
+        }
+
+        function printPerformanceReport() {
+            // Switch to performance tab
+            document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+            document.querySelector('[data-tab="performanceTab"]').classList.add('active');
+            document.querySelectorAll('.tab-pane').forEach(p => p.style.display = 'none');
+            document.getElementById('performanceTab').style.display = 'block';
+            
+            // Print after a short delay to ensure content is visible
+            setTimeout(() => {
+                window.print();
+            }, 500);
+        }
+
+        function closePdfPreview() {
+            document.getElementById('pdfPreviewModal').style.display = 'none';
         }
 
         // Main processing function - FIXED
@@ -3074,9 +4162,4 @@
         });
     </script>
 </body>
-
 </html>
-
-
-
-
