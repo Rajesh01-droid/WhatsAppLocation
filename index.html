@@ -150,7 +150,7 @@
         }
 
         /* Shift Badge Styles */
-        .shift-morning {
+        .shift-Morning {
             background: #e3f2fd;
             color: #1565c0;
             padding: 4px 8px;
@@ -1843,7 +1843,7 @@
                 
                 <div class="form-group">
                     <label for="shiftCode">Shift Code (Unique)</label>
-                    <input type="text" id="shiftCode" placeholder="e.g., morning, night, custom1" required>
+                    <input type="text" id="shiftCode" placeholder="e.g., Morning, night, custom1" required>
                     <small style="color: var(--muted);">Use simple lowercase code without spaces (must be unique)</small>
                 </div>
                 
@@ -1920,9 +1920,9 @@
         // Configuration
         // Default shift configurations - Editable by user
         let shiftConfig = {
-            morning: {
+            Morning: {
                 name: 'Morning Shift',
-                code: 'morning',
+                code: 'Morning',
                 start: '08:46',
                 end: '14:57',
                 lateAfter: '08:46',
@@ -2196,14 +2196,14 @@
             // Check if any employee is using this shift
             const employeesUsingShift = employeeDatabase.filter(emp => emp.shift === shiftCode);
             if (employeesUsingShift.length > 0) {
-                if (!confirm(`${employeesUsingShift.length} employee(s) are using this shift. They will be moved to morning shift. Delete anyway?`)) {
+                if (!confirm(`${employeesUsingShift.length} employee(s) are using this shift. They will be moved to Morning shift. Delete anyway?`)) {
                     return;
                 }
                 
-                // Move employees to morning shift
+                // Move employees to Morning shift
                 employeeDatabase.forEach(emp => {
                     if (emp.shift === shiftCode) {
-                        emp.shift = 'morning';
+                        emp.shift = 'Morning';
                     }
                 });
                 saveEmployeeDatabase();
@@ -2231,9 +2231,9 @@
         function resetShiftsToDefault() {
             if (confirm('Are you sure you want to reset all shifts to default? This cannot be undone.')) {
                 shiftConfig = {
-                    morning: {
+                    Morning: {
                         name: 'Morning Shift',
-                        code: 'morning',
+                        code: 'Morning',
                         start: '08:46',
                         end: '14:57',
                         lateAfter: '08:46',
@@ -2298,7 +2298,7 @@
                 
                 // Determine CSS class based on shift code
                 let shiftClass = 'shift-custom';
-                if (shiftCode === 'morning') shiftClass = 'shift-morning';
+                if (shiftCode === 'Morning') shiftClass = 'shift-Morning';
                 else if (shiftCode === 'afternoon') shiftClass = 'shift-afternoon';
                 else if (shiftCode === 'night') shiftClass = 'shift-night';
                 
@@ -2455,7 +2455,7 @@
                 employeeShiftsBody.innerHTML += `
                     <tr>
                         <td>${escapeHtml(emp.name)}</td>
-                        <td><span class="shift-${emp.shift || 'morning'}">${shiftConfig[emp.shift]?.name || 'Morning Shift'}</span></td>
+                        <td><span class="shift-${emp.shift || 'Morning'}">${shiftConfig[emp.shift]?.name || 'Morning Shift'}</span></td>
                         <td>
                             <select class="employee-shift-select" data-employee-id="${emp.id}" style="width: 100%; padding: 5px;">
                                 ${shiftOptions}
@@ -2505,11 +2505,11 @@
         function updateShiftDetailsInDashboard() {
             for (const p in perPerson) {
                 const empDetails = getEmployeeDetails(p);
-                perPerson[p].details.shift = empDetails.shift || 'morning';
+                perPerson[p].details.shift = empDetails.shift || 'Morning';
                 
                 // Update shift in all dates
                 for (const date in perPerson[p].dates) {
-                    perPerson[p].dates[date].shift = empDetails.shift || 'morning';
+                    perPerson[p].dates[date].shift = empDetails.shift || 'Morning';
                 }
             }
         }
@@ -2584,8 +2584,8 @@
             
             const templateData = [
                 ['Employee Name', 'Designation', 'Posting Office', 'Contact Number', 'Shift'],
-                ['Dr. Nargis Lashari', 'Medical Officer', 'RHC Gambat', '03001234567', 'morning'],
-                ['Dr. Ali Ahmed', 'Dental Surgeon', 'BHU Sultanabad', '03119876543', 'morning'],
+                ['Dr. Nargis Lashari', 'Medical Officer', 'RHC Gambat', '03001234567', 'Morning'],
+                ['Dr. Ali Ahmed', 'Dental Surgeon', 'BHU Sultanabad', '03119876543', 'Morning'],
                 ['Dr. Sara Khan', 'Women Medical Officer', 'RHC Khipro', '03211234567', 'afternoon'],
                 ['NOTE:', 'Fill all columns', 'No empty rows between data', 'Contact must be unique', `Shift: ${shiftOptions}`],
                 ['IMPORTANT:', 'First row is header', 'Start data from row 2', 'Save as Excel file', 'Shift must match exactly']
@@ -2641,7 +2641,7 @@
                         const designation = (row[1] || '').toString().trim();
                         const posting = (row[2] || '').toString().trim();
                         let contact = (row[3] || '').toString().trim();
-                        let shiftInput = (row[4] || 'morning').toString().trim();
+                        let shiftInput = (row[4] || 'Morning').toString().trim();
 
                         // Validate row
                         if (!name || !designation || !posting || !contact) {
@@ -2650,7 +2650,7 @@
                         }
 
                         // Find shift by name or code
-                        let shift = 'morning'; // Default
+                        let shift = 'Morning'; // Default
                         const shiftLower = shiftInput.toLowerCase();
                         
                         // Check if input matches any shift code
@@ -2760,13 +2760,13 @@
                 document.getElementById('empDesignation').value = employee.designation;
                 document.getElementById('empPosting').value = employee.posting;
                 document.getElementById('empContact').value = employee.contact;
-                document.getElementById('empShift').value = employee.shift || 'morning';
+                document.getElementById('empShift').value = employee.shift || 'Morning';
             } else {
                 // Add mode
                 title.textContent = 'Add Employee';
                 form.reset();
                 document.getElementById('employeeId').value = '';
-                document.getElementById('empShift').value = 'morning';
+                document.getElementById('empShift').value = 'Morning';
             }
             
             modal.style.display = 'flex';
@@ -2917,7 +2917,7 @@
 
         // Get shift details
         function getShiftDetails(shiftName) {
-            return shiftConfig[shiftName] || shiftConfig.morning;
+            return shiftConfig[shiftName] || shiftConfig.Morning;
         }
 
         // Convert time string to minutes
@@ -2965,7 +2965,7 @@
                 designation: '-',
                 posting: '-',
                 contact: senderKey.replace(/\D/g, '').length >= 7 ? senderKey.replace(/\D/g, '') : '-',
-                shift: 'morning'
+                shift: 'Morning'
             };
         }
 
@@ -3164,7 +3164,7 @@
                 
                 performers.push({
                     name: rec.details.fullName || p,
-                    shift: rec.details.shift || 'morning',
+                    shift: rec.details.shift || 'Morning',
                     onTime: onTime,
                     totalWorkingDays: totalWorkingDays,
                     totalDays: dates.length,
@@ -3293,7 +3293,7 @@
             }
             
             employeeDatabase.forEach(emp => {
-                const shiftClass = `shift-${emp.shift || 'morning'}`;
+                const shiftClass = `shift-${emp.shift || 'Morning'}`;
                 const shiftName = shiftConfig[emp.shift]?.name || 'Morning Shift';
                 
                 tbody.insertAdjacentHTML('beforeend', `
@@ -3537,7 +3537,7 @@
                             designation: empDetails.designation,
                             posting: empDetails.posting,
                             phone: empDetails.contact,
-                            shift: empDetails.shift || 'morning'
+                            shift: empDetails.shift || 'Morning'
                         },
                         dates: {}
                     };
@@ -3548,7 +3548,7 @@
                         checkIn: null,
                         checkOut: null,
                         location: null,
-                        shift: empDetails.shift || 'morning',
+                        shift: empDetails.shift || 'Morning',
                         rawMessages: []
                     };
                 }
@@ -3627,7 +3627,7 @@
 
             // Calculate status for each entry based on shift
             for (const p in perPerson) {
-                const shiftName = perPerson[p].details.shift || 'morning';
+                const shiftName = perPerson[p].details.shift || 'Morning';
                 for (const d in perPerson[p].dates) {
                     const e = perPerson[p].dates[d];
                     const dayOfWeek = getDateDayOfWeek(d); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
@@ -3862,7 +3862,7 @@
                 const accuracy = totalPersonWorkingDays > 0 ? Math.round((onTime / totalPersonWorkingDays) * 100) : 0;
                 
                 // Shift badge
-                const shiftBadgeClass = `shift-${rec.details.shift || 'morning'}`;
+                const shiftBadgeClass = `shift-${rec.details.shift || 'Morning'}`;
                 const shiftName = shiftConfig[rec.details.shift]?.name || 'Morning Shift';
                 
                 tbody.insertAdjacentHTML('beforeend', `<tr>
@@ -4076,7 +4076,7 @@
                 performers.push({
                     name: rec.details.fullName,
                     designation: rec.details.designation,
-                    shift: rec.details.shift || 'morning',
+                    shift: rec.details.shift || 'Morning',
                     totalDays: totalPersonDays,
                     workingDays: totalWorkingDays,
                     onTime: onTime,
@@ -5246,3 +5246,4 @@
     </script>
 </body>
 </html>
+
