@@ -149,6 +149,185 @@
             margin-bottom: 5px;
         }
 
+        /* Shift Badge Styles */
+        .shift-morning {
+            background: #e3f2fd;
+            color: #1565c0;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .shift-afternoon {
+            background: #fff3e0;
+            color: #ef6c00;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .shift-night {
+            background: #f3e5f5;
+            color: #7b1fa2;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .shift-custom {
+            background: #e8f5e9;
+            color: #2e7d32;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        /* Shift Management Styles */
+        .shift-management {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            border: 2px dashed #e6eef7;
+        }
+
+        .shift-management-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .shift-management-header h3 {
+            color: var(--accent);
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .shift-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .shift-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #1565c0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .shift-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .shift-card.active {
+            border-left: 4px solid var(--success);
+            background: #f0f9ff;
+        }
+
+        .shift-card-title {
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .shift-card-times {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .shift-time-item {
+            background: #f8fafc;
+            padding: 8px;
+            border-radius: 6px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .shift-time-label {
+            font-size: 12px;
+            color: var(--muted);
+            margin-bottom: 3px;
+        }
+
+        .shift-time-value {
+            font-weight: 600;
+            color: var(--accent);
+        }
+
+        .shift-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        /* Time Input Group */
+        .time-input-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        /* Shift Time Rules */
+        .shift-rules {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            border-left: 4px solid #3b82f6;
+        }
+
+        .shift-rules h4 {
+            color: #1e3a8a;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .shift-rules-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+        }
+
+        .shift-rule-item {
+            background: white;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .shift-name {
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 5px;
+        }
+
+        .shift-time {
+            color: var(--muted);
+            font-size: 13px;
+        }
+
         @media (max-width: 768px) {
             .instructions {
                 flex-direction: column;
@@ -169,6 +348,17 @@
             }
             .time-rules::before {
                 display: none;
+            }
+            .shift-management-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            .shift-cards {
+                grid-template-columns: 1fr;
+            }
+            .time-input-group {
+                grid-template-columns: 1fr;
             }
         }
 
@@ -1138,14 +1328,60 @@
                 <li><strong>Apply Filter:</strong> Use filters to view specific data</li>
                 <li><strong>Export:</strong> Download Excel with detailed reports</li>
                 <li><strong>PDF Report:</strong> Download monthly performance report with charts</li>
+                <li><strong>Shift:</strong> Each employee can be assigned a shift. You can edit shift timings.</li>
             </ul>
             
             <div class="time-rules">
                 <h4><i class="fas fa-clock"></i> Attendance Time Rules</h4>
-                <p><strong>Late Time:</strong> After 8:46 AM</p>
-                <p><strong>Early Leave:</strong> Before 2:57 PM</p>
-                <p><strong>Friday Early:</strong> Before 12:30 PM</p>
-                <p><strong>On Time:</strong> Before 8:46 AM check-in and after 2:57 PM check-out</p>
+                <p><strong>Late Time:</strong> After specified shift start time</p>
+                <p><strong>Early Leave:</strong> Before specified shift end time</p>
+                <p><strong>Friday Early:</strong> Special Friday early time (if set)</p>
+                <p><strong>On Time:</strong> Within shift timings</p>
+                
+                <div class="shift-rules">
+                    <h4><i class="fas fa-business-time"></i> Shift Management</h4>
+                    <div class="shift-rules-grid">
+                        <div class="shift-rule-item">
+                            <div class="shift-name">1. Configure Shifts</div>
+                            <div class="shift-time">Click "Configure Shifts" button below</div>
+                        </div>
+                        <div class="shift-rule-item">
+                            <div class="shift-name">2. Customize Timings</div>
+                            <div class="shift-time">Set your own shift start/end times</div>
+                        </div>
+                        <div class="shift-rule-item">
+                            <div class="shift-name">3. Automatic Rules</div>
+                            <div class="shift-time">Late/Early rules auto-adjusted</div>
+                        </div>
+                        <div class="shift-rule-item">
+                            <div class="shift-name">4. Assign to Staff</div>
+                            <div class="shift-time">Assign shifts in Employee Database</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Shift Management Section -->
+        <div class="shift-management" id="shiftManagement">
+            <div class="shift-management-header">
+                <h3><i class="fas fa-cogs"></i> Shift Configuration</h3>
+                <div>
+                    <button id="configureShiftsBtn" class="btn">
+                        <i class="fas fa-sliders-h"></i> Configure Shifts
+                    </button>
+                </div>
+            </div>
+            
+            <div class="shift-cards" id="shiftCards">
+                <!-- Shift cards will be populated here -->
+            </div>
+            
+            <div class="shift-rules">
+                <h4><i class="fas fa-info-circle"></i> Active Shift Rules</h4>
+                <div class="shift-rules-grid" id="activeShiftRules">
+                    <!-- Active shift rules will be populated here -->
+                </div>
             </div>
         </div>
 
@@ -1165,6 +1401,10 @@
                 <option>Early</option>
                 <option>Absent</option>
                 <option>Holiday (Sun)</option>
+            </select>
+            <select id="shiftFilter">
+                <option value="">All Shifts</option>
+                <!-- Shift options will be populated here -->
             </select>
             <input id="searchBox" type="text" placeholder="Search name / phone / place" />
             <div class="action-buttons">
@@ -1263,6 +1503,7 @@
                 <button class="tab-button" data-tab="locationsTab">Locations</button>
                 <button class="tab-button" data-tab="employeeTab">Employee Database</button>
                 <button class="tab-button" data-tab="performanceTab">Performance Report</button>
+                <button class="tab-button" data-tab="shiftsTab">Shift Management</button>
             </div>
 
             <div class="tab-content">
@@ -1282,12 +1523,13 @@
                                     <th>Early</th>
                                     <th>Absent</th>
                                     <th>Sunday</th>
+                                    <th>Shift</th>
                                     <th>Accuracy %</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr>
-                                    <td colspan="9" class="empty-state">
+                                    <td colspan="10" class="empty-state">
                                         <i class="fas fa-chart-bar"></i>
                                         <p>No data yet. Upload .txt and click Process.</p>
                                     </td>
@@ -1309,12 +1551,13 @@
                                     <th>Check-In</th>
                                     <th>Check-Out</th>
                                     <th>Status</th>
+                                    <th>Shift</th>
                                     <th>Location</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr>
-                                    <td colspan="8" class="empty-state">
+                                    <td colspan="9" class="empty-state">
                                         <i class="fas fa-users"></i>
                                         <p>No attendance data available.</p>
                                     </td>
@@ -1396,6 +1639,7 @@
                                             <th>Designation</th>
                                             <th>Posting Office</th>
                                             <th>Contact #</th>
+                                            <th>Shift</th>
                                             <th>Actions</th>
                                         </tr>
                                     </thead>
@@ -1442,6 +1686,7 @@
                                         <th>Rank</th>
                                         <th>Employee Name</th>
                                         <th>Designation</th>
+                                        <th>Shift</th>
                                         <th>Total Days</th>
                                         <th>Working Days</th>
                                         <th>On Time</th>
@@ -1453,13 +1698,76 @@
                                 </thead>
                                 <tbody id="performanceTableBody">
                                     <tr>
-                                        <td colspan="10" class="empty-state">
+                                        <td colspan="11" class="empty-state">
                                             <i class="fas fa-chart-bar"></i>
                                             <p>No performance data available. Process attendance data first.</p>
                                         </td>
                                     </tr>
                                 </tbody>
                             </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="shiftsTab" class="tab-pane" style="display:none">
+                    <div class="shift-management">
+                        <div class="shift-management-header">
+                            <h3><i class="fas fa-cogs"></i> Shift Configuration & Management</h3>
+                            <div>
+                                <button id="addShiftBtn" class="btn">
+                                    <i class="fas fa-plus"></i> Add New Shift
+                                </button>
+                                <button id="resetShiftsBtn" class="btn-ghost" style="color: var(--danger);">
+                                    <i class="fas fa-redo"></i> Reset to Default
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="shift-cards" id="shiftCardsTab">
+                            <!-- Shift cards will be populated here -->
+                        </div>
+                        
+                        <div class="shift-rules">
+                            <h4><i class="fas fa-info-circle"></i> How to Configure Shifts</h4>
+                            <div class="shift-rules-grid">
+                                <div class="shift-rule-item">
+                                    <div class="shift-name">1. Add/Edit Shifts</div>
+                                    <div class="shift-time">Click "Add New Shift" or edit existing ones</div>
+                                </div>
+                                <div class="shift-rule-item">
+                                    <div class="shift-name">2. Set Your Times</div>
+                                    <div class="shift-time">Define start time, end time, late/early rules</div>
+                                </div>
+                                <div class="shift-rule-item">
+                                    <div class="shift-name">3. Friday Special</div>
+                                    <div class="shift-time">Optionally set special Friday early time</div>
+                                </div>
+                                <div class="shift-rule-item">
+                                    <div class="shift-name">4. Auto-Apply</div>
+                                    <div class="shift-time">Changes automatically apply to all employees</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div style="margin-top: 25px;">
+                            <h4 style="color: var(--accent); margin-bottom: 15px;">
+                                <i class="fas fa-users"></i> Employee Shift Assignment
+                            </h4>
+                            <div class="table-container">
+                                <table id="employeeShiftsTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Employee Name</th>
+                                            <th>Current Shift</th>
+                                            <th>Change Shift</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="employeeShiftsBody">
+                                        <!-- Employee shift assignments will be populated here -->
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1503,9 +1811,89 @@
                     <label for="empContact">Contact Number</label>
                     <input type="text" id="empContact" placeholder="e.g., 03001234567" required>
                 </div>
+                <div class="form-group">
+                    <label for="empShift">Shift</label>
+                    <select id="empShift" required>
+                        <!-- Shift options will be populated dynamically -->
+                    </select>
+                </div>
                 <div class="form-actions">
                     <button type="button" class="btn-ghost" id="cancelEmployeeBtn">Cancel</button>
                     <button type="submit" class="btn">Save Employee</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Shift Modal -->
+    <div class="modal" id="shiftModal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3 class="modal-title" id="shiftModalTitle">Add Shift</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <form id="shiftForm">
+                <input type="hidden" id="shiftId">
+                <input type="hidden" id="shiftIndex">
+                
+                <div class="form-group">
+                    <label for="shiftName">Shift Name</label>
+                    <input type="text" id="shiftName" placeholder="e.g., Morning Shift, Night Shift" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="shiftCode">Shift Code (Unique)</label>
+                    <input type="text" id="shiftCode" placeholder="e.g., morning, night, custom1" required>
+                    <small style="color: var(--muted);">Use simple lowercase code without spaces (must be unique)</small>
+                </div>
+                
+                <div class="form-group">
+                    <label>Shift Timings</label>
+                    <div class="time-input-group">
+                        <div>
+                            <label for="startTime">Start Time</label>
+                            <input type="time" id="startTime" required>
+                        </div>
+                        <div>
+                            <label for="endTime">End Time</label>
+                            <input type="time" id="endTime" required>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Late & Early Rules</label>
+                    <div class="time-input-group">
+                        <div>
+                            <label for="lateAfter">Late After (HH:MM)</label>
+                            <input type="time" id="lateAfter" required>
+                        </div>
+                        <div>
+                            <label for="earlyBefore">Early Before (HH:MM)</label>
+                            <input type="time" id="earlyBefore" required>
+                        </div>
+                    </div>
+                    <small style="color: var(--muted);">Late After: Considered late if check-in after this time<br>Early Before: Considered early if check-out before this time</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="shiftColor">Shift Color</label>
+                    <input type="color" id="shiftColor" value="#1565c0" style="width: 100%; height: 40px;">
+                </div>
+                
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="isFridaySpecial"> Friday has special early time?
+                    </label>
+                    <div id="fridayTimeContainer" style="display: none; margin-top: 10px;">
+                        <label for="fridayEarlyBefore">Friday Early Before</label>
+                        <input type="time" id="fridayEarlyBefore">
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" class="btn-ghost" id="cancelShiftBtn">Cancel</button>
+                    <button type="submit" class="btn">Save Shift</button>
                 </div>
             </form>
         </div>
@@ -1530,9 +1918,42 @@
 
     <script>
         // Configuration
-        const LATE_TIME_MINS = 8 * 60 + 46; // 8:46 AM
-        const EARLY_TIME_MINS = 14 * 60 + 57; // 2:57 PM
-        const FRIDAY_EARLY_TIME_MINS = 12 * 60 + 27; // 12:27 PM for Fridays
+        // Default shift configurations - Editable by user
+        let shiftConfig = {
+            morning: {
+                name: 'Morning Shift',
+                code: 'morning',
+                start: '08:46',
+                end: '14:57',
+                lateAfter: '08:46',
+                earlyBefore: '14:57',
+                fridayEarlyBefore: '12:27',
+                isFridaySpecial: true,
+                color: '#1565c0'
+            },
+            afternoon: {
+                name: 'Afternoon Shift',
+                code: 'afternoon',
+                start: '12:00',
+                end: '20:00',
+                lateAfter: '12:00',
+                earlyBefore: '20:00',
+                fridayEarlyBefore: '20:00',
+                isFridaySpecial: false,
+                color: '#ef6c00'
+            },
+            night: {
+                name: 'Night Shift',
+                code: 'night',
+                start: '20:00',
+                end: '08:00',
+                lateAfter: '20:00',
+                earlyBefore: '08:00',
+                fridayEarlyBefore: '08:00',
+                isFridaySpecial: false,
+                color: '#7b1fa2'
+            }
+        };
 
         // Employee Database - will be loaded from localStorage
         let employeeDatabase = [];
@@ -1559,8 +1980,20 @@
             // Load employee database from localStorage
             loadEmployeeDatabase();
             
+            // Load shift configuration from localStorage
+            loadShiftConfig();
+            
             // Initialize empty employee database
             renderEmployeeDatabase();
+            
+            // Render shift cards
+            renderShiftCards();
+            
+            // Update shift filter dropdown
+            updateShiftFilter();
+            
+            // Update employee form shift dropdown
+            updateEmployeeShiftDropdown();
             
             // Setup modal handlers
             setupModalHandlers();
@@ -1571,9 +2004,515 @@
             // Setup delete all button
             document.getElementById('deleteAllEmployeesBtn').addEventListener('click', deleteAllEmployees);
             
-            // Setup PDF report button - FIXED: Proper event listeners
+            // Setup PDF report button
             setupPdfHandlers();
+            
+            // Setup shift management buttons
+            setupShiftHandlers();
         });
+
+        // Load shift configuration from localStorage
+        function loadShiftConfig() {
+            const saved = localStorage.getItem('shiftConfig');
+            if (saved) {
+                shiftConfig = JSON.parse(saved);
+            }
+        }
+
+        // Save shift configuration to localStorage
+        function saveShiftConfig() {
+            localStorage.setItem('shiftConfig', JSON.stringify(shiftConfig));
+        }
+
+        // Setup shift handlers
+        function setupShiftHandlers() {
+            const configureShiftsBtn = document.getElementById('configureShiftsBtn');
+            const addShiftBtn = document.getElementById('addShiftBtn');
+            const resetShiftsBtn = document.getElementById('resetShiftsBtn');
+            const shiftModal = document.getElementById('shiftModal');
+            const closeShiftModal = shiftModal.querySelector('.close-modal');
+            const cancelShiftBtn = document.getElementById('cancelShiftBtn');
+            const shiftForm = document.getElementById('shiftForm');
+            const isFridaySpecial = document.getElementById('isFridaySpecial');
+
+            configureShiftsBtn.addEventListener('click', () => {
+                // Switch to shifts tab
+                document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+                document.querySelector('[data-tab="shiftsTab"]').classList.add('active');
+                document.querySelectorAll('.tab-pane').forEach(p => p.style.display = 'none');
+                document.getElementById('shiftsTab').style.display = 'block';
+            });
+
+            addShiftBtn.addEventListener('click', () => openShiftModal());
+            resetShiftsBtn.addEventListener('click', resetShiftsToDefault);
+
+            closeShiftModal.addEventListener('click', () => closeShiftModal());
+            cancelShiftBtn.addEventListener('click', () => closeShiftModal());
+
+            shiftForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                saveShift();
+            });
+
+            isFridaySpecial.addEventListener('change', function() {
+                document.getElementById('fridayTimeContainer').style.display = 
+                    this.checked ? 'block' : 'none';
+            });
+
+            // Close modal when clicking outside
+            window.addEventListener('click', (e) => {
+                if (e.target === shiftModal) {
+                    closeShiftModal();
+                }
+            });
+        }
+
+        // Open shift modal
+        function openShiftModal(shiftCode = null) {
+            const modal = document.getElementById('shiftModal');
+            const title = document.getElementById('shiftModalTitle');
+            const form = document.getElementById('shiftForm');
+            
+            if (shiftCode && shiftConfig[shiftCode]) {
+                // Edit mode
+                const shift = shiftConfig[shiftCode];
+                title.textContent = 'Edit Shift';
+                document.getElementById('shiftId').value = shiftCode;
+                document.getElementById('shiftIndex').value = shiftCode;
+                document.getElementById('shiftName').value = shift.name;
+                document.getElementById('shiftCode').value = shift.code;
+                document.getElementById('startTime').value = shift.start;
+                document.getElementById('endTime').value = shift.end;
+                document.getElementById('lateAfter').value = shift.lateAfter;
+                document.getElementById('earlyBefore').value = shift.earlyBefore;
+                document.getElementById('shiftColor').value = shift.color;
+                document.getElementById('isFridaySpecial').checked = shift.isFridaySpecial;
+                document.getElementById('fridayEarlyBefore').value = shift.fridayEarlyBefore || '';
+                document.getElementById('fridayTimeContainer').style.display = 
+                    shift.isFridaySpecial ? 'block' : 'none';
+            } else {
+                // Add mode
+                title.textContent = 'Add Shift';
+                form.reset();
+                document.getElementById('shiftId').value = '';
+                document.getElementById('shiftIndex').value = '';
+                document.getElementById('shiftColor').value = '#1565c0';
+                document.getElementById('isFridaySpecial').checked = false;
+                document.getElementById('fridayTimeContainer').style.display = 'none';
+            }
+            
+            modal.style.display = 'flex';
+        }
+
+        // Close shift modal
+        function closeShiftModal() {
+            const modal = document.getElementById('shiftModal');
+            const form = document.getElementById('shiftForm');
+            
+            modal.style.display = 'none';
+            form.reset();
+            document.getElementById('shiftId').value = '';
+            document.getElementById('fridayTimeContainer').style.display = 'none';
+        }
+
+        // Save shift
+        function saveShift() {
+            const shiftId = document.getElementById('shiftId').value;
+            const shiftIndex = document.getElementById('shiftIndex').value;
+            const name = document.getElementById('shiftName').value.trim();
+            const code = document.getElementById('shiftCode').value.trim().toLowerCase();
+            const start = document.getElementById('startTime').value;
+            const end = document.getElementById('endTime').value;
+            const lateAfter = document.getElementById('lateAfter').value;
+            const earlyBefore = document.getElementById('earlyBefore').value;
+            const color = document.getElementById('shiftColor').value;
+            const isFridaySpecial = document.getElementById('isFridaySpecial').checked;
+            const fridayEarlyBefore = document.getElementById('fridayEarlyBefore').value;
+
+            // Validation
+            if (!name || !code || !start || !end || !lateAfter || !earlyBefore) {
+                alert('Please fill all required fields');
+                return;
+            }
+
+            // Check for duplicate code (edit mode mein current shift ko exclude karein)
+            if (!shiftId && shiftConfig[code]) {
+                alert('Shift with this code already exists!');
+                return;
+            }
+
+            // Check if code changed in edit mode
+            if (shiftId && shiftId !== code && shiftConfig[code]) {
+                alert('Shift with this code already exists!');
+                return;
+            }
+
+            const newShift = {
+                name,
+                code,
+                start,
+                end,
+                lateAfter,
+                earlyBefore,
+                fridayEarlyBefore: isFridaySpecial ? fridayEarlyBefore : '',
+                isFridaySpecial,
+                color
+            };
+
+            if (shiftId) {
+                // Update existing shift
+                // If code changed, delete old and create new
+                if (shiftId !== code) {
+                    delete shiftConfig[shiftId];
+                }
+                shiftConfig[code] = newShift;
+            } else {
+                // Add new shift
+                shiftConfig[code] = newShift;
+            }
+
+            saveShiftConfig();
+            renderShiftCards();
+            updateShiftFilter();
+            updateEmployeeShiftDropdown();
+            closeShiftModal();
+            
+            // Update attendance data if exists
+            if (Object.keys(perPerson).length > 0) {
+                updateShiftDetailsInDashboard();
+                applyFilterAndRender();
+            }
+            
+            showNotification(`Shift ${shiftId ? 'updated' : 'added'} successfully!`);
+        }
+
+        // Delete shift
+        function deleteShift(shiftCode) {
+            if (Object.keys(shiftConfig).length <= 1) {
+                alert('You must have at least one shift configuration.');
+                return;
+            }
+            
+            // Check if any employee is using this shift
+            const employeesUsingShift = employeeDatabase.filter(emp => emp.shift === shiftCode);
+            if (employeesUsingShift.length > 0) {
+                if (!confirm(`${employeesUsingShift.length} employee(s) are using this shift. They will be moved to morning shift. Delete anyway?`)) {
+                    return;
+                }
+                
+                // Move employees to morning shift
+                employeeDatabase.forEach(emp => {
+                    if (emp.shift === shiftCode) {
+                        emp.shift = 'morning';
+                    }
+                });
+                saveEmployeeDatabase();
+                renderEmployeeDatabase();
+            }
+            
+            if (confirm(`Are you sure you want to delete the "${shiftConfig[shiftCode].name}" shift?`)) {
+                delete shiftConfig[shiftCode];
+                saveShiftConfig();
+                renderShiftCards();
+                updateShiftFilter();
+                updateEmployeeShiftDropdown();
+                
+                // Update attendance data if exists
+                if (Object.keys(perPerson).length > 0) {
+                    updateShiftDetailsInDashboard();
+                    applyFilterAndRender();
+                }
+                
+                showNotification('Shift deleted successfully!');
+            }
+        }
+
+        // Reset shifts to default
+        function resetShiftsToDefault() {
+            if (confirm('Are you sure you want to reset all shifts to default? This cannot be undone.')) {
+                shiftConfig = {
+                    morning: {
+                        name: 'Morning Shift',
+                        code: 'morning',
+                        start: '08:46',
+                        end: '14:57',
+                        lateAfter: '08:46',
+                        earlyBefore: '14:57',
+                        fridayEarlyBefore: '12:27',
+                        isFridaySpecial: true,
+                        color: '#1565c0'
+                    },
+                    afternoon: {
+                        name: 'Afternoon Shift',
+                        code: 'afternoon',
+                        start: '12:00',
+                        end: '20:00',
+                        lateAfter: '12:00',
+                        earlyBefore: '20:00',
+                        fridayEarlyBefore: '20:00',
+                        isFridaySpecial: false,
+                        color: '#ef6c00'
+                    },
+                    night: {
+                        name: 'Night Shift',
+                        code: 'night',
+                        start: '20:00',
+                        end: '08:00',
+                        lateAfter: '20:00',
+                        earlyBefore: '08:00',
+                        fridayEarlyBefore: '08:00',
+                        isFridaySpecial: false,
+                        color: '#7b1fa2'
+                    }
+                };
+                
+                saveShiftConfig();
+                renderShiftCards();
+                updateShiftFilter();
+                updateEmployeeShiftDropdown();
+                
+                // Update attendance data if exists
+                if (Object.keys(perPerson).length > 0) {
+                    updateShiftDetailsInDashboard();
+                    applyFilterAndRender();
+                }
+                
+                showNotification('Shifts reset to default successfully!');
+            }
+        }
+
+        // Render shift cards
+        function renderShiftCards() {
+            const shiftCards = document.getElementById('shiftCards');
+            const shiftCardsTab = document.getElementById('shiftCardsTab');
+            const activeShiftRules = document.getElementById('activeShiftRules');
+            
+            if (!shiftCards || !shiftCardsTab || !activeShiftRules) return;
+            
+            shiftCards.innerHTML = '';
+            shiftCardsTab.innerHTML = '';
+            activeShiftRules.innerHTML = '';
+            
+            Object.keys(shiftConfig).forEach(shiftCode => {
+                const shift = shiftConfig[shiftCode];
+                
+                // Determine CSS class based on shift code
+                let shiftClass = 'shift-custom';
+                if (shiftCode === 'morning') shiftClass = 'shift-morning';
+                else if (shiftCode === 'afternoon') shiftClass = 'shift-afternoon';
+                else if (shiftCode === 'night') shiftClass = 'shift-night';
+                
+                // Shift card for main display
+                shiftCards.innerHTML += `
+                    <div class="shift-card" style="border-left-color: ${shift.color}">
+                        <div class="shift-card-title">
+                            <span>${shift.name}</span>
+                            <span class="${shiftClass}">${shift.code}</span>
+                        </div>
+                        <div class="shift-card-times">
+                            <div class="shift-time-item">
+                                <div class="shift-time-label">Start Time</div>
+                                <div class="shift-time-value">${formatTimeForDisplay(shift.start)}</div>
+                            </div>
+                            <div class="shift-time-item">
+                                <div class="shift-time-label">End Time</div>
+                                <div class="shift-time-value">${formatTimeForDisplay(shift.end)}</div>
+                            </div>
+                            <div class="shift-time-item">
+                                <div class="shift-time-label">Late After</div>
+                                <div class="shift-time-value">${formatTimeForDisplay(shift.lateAfter)}</div>
+                            </div>
+                            <div class="shift-time-item">
+                                <div class="shift-time-label">Early Before</div>
+                                <div class="shift-time-value">${formatTimeForDisplay(shift.earlyBefore)}</div>
+                            </div>
+                        </div>
+                        ${shift.isFridaySpecial ? `
+                            <div style="margin-top: 10px; padding: 5px; background: #fff3cd; border-radius: 4px; font-size: 12px;">
+                                <i class="fas fa-star"></i> Friday Early: ${formatTimeForDisplay(shift.fridayEarlyBefore)}
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+                
+                // Shift card for shift management tab (with edit/delete buttons)
+                shiftCardsTab.innerHTML += `
+                    <div class="shift-card" style="border-left-color: ${shift.color}">
+                        <div class="shift-card-title">
+                            <span>${shift.name}</span>
+                            <span class="${shiftClass}">${shift.code}</span>
+                        </div>
+                        <div class="shift-card-times">
+                            <div class="shift-time-item">
+                                <div class="shift-time-label">Start Time</div>
+                                <div class="shift-time-value">${formatTimeForDisplay(shift.start)}</div>
+                            </div>
+                            <div class="shift-time-item">
+                                <div class="shift-time-label">End Time</div>
+                                <div class="shift-time-value">${formatTimeForDisplay(shift.end)}</div>
+                            </div>
+                            <div class="shift-time-item">
+                                <div class="shift-time-label">Late After</div>
+                                <div class="shift-time-value">${formatTimeForDisplay(shift.lateAfter)}</div>
+                            </div>
+                            <div class="shift-time-item">
+                                <div class="shift-time-label">Early Before</div>
+                                <div class="shift-time-value">${formatTimeForDisplay(shift.earlyBefore)}</div>
+                            </div>
+                        </div>
+                        ${shift.isFridaySpecial ? `
+                            <div style="margin-top: 10px; padding: 5px; background: #fff3cd; border-radius: 4px; font-size: 12px;">
+                                <i class="fas fa-star"></i> Friday Early: ${formatTimeForDisplay(shift.fridayEarlyBefore)}
+                            </div>
+                        ` : ''}
+                        <div class="shift-actions">
+                            <button class="btn-ghost" onclick="openShiftModal('${shiftCode}')">
+                                <i class="fas fa-edit"></i> Edit
+                            </button>
+                            <button class="btn-ghost" onclick="deleteShift('${shiftCode}')" style="color: var(--danger);">
+                                <i class="fas fa-trash"></i> Delete
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                // Active shift rules
+                activeShiftRules.innerHTML += `
+                    <div class="shift-rule-item">
+                        <div class="shift-name">${shift.name}</div>
+                        <div class="shift-time">${formatTimeForDisplay(shift.start)} - ${formatTimeForDisplay(shift.end)}</div>
+                        <div style="font-size: 12px; color: #666;">
+                            Late after ${formatTimeForDisplay(shift.lateAfter)}
+                            ${shift.isFridaySpecial ? ` | Friday: ${formatTimeForDisplay(shift.fridayEarlyBefore)}` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            // Render employee shifts table in shifts tab
+            renderEmployeeShiftsTable();
+        }
+
+        // Format time for display (24h to 12h)
+        function formatTimeForDisplay(time24) {
+            if (!time24) return '';
+            
+            const [hours, minutes] = time24.split(':').map(Number);
+            const period = hours >= 12 ? 'PM' : 'AM';
+            const hours12 = hours % 12 || 12;
+            
+            return `${hours12}:${minutes.toString().padStart(2, '0')} ${period}`;
+        }
+
+        // Update shift filter dropdown
+        function updateShiftFilter() {
+            const shiftFilter = document.getElementById('shiftFilter');
+            shiftFilter.innerHTML = '<option value="">All Shifts</option>';
+            
+            Object.keys(shiftConfig).forEach(shiftCode => {
+                const shift = shiftConfig[shiftCode];
+                shiftFilter.innerHTML += `<option value="${shiftCode}">${shift.name}</option>`;
+            });
+        }
+
+        // Update employee shift dropdown
+        function updateEmployeeShiftDropdown() {
+            const empShift = document.getElementById('empShift');
+            empShift.innerHTML = '';
+            
+            Object.keys(shiftConfig).forEach(shiftCode => {
+                const shift = shiftConfig[shiftCode];
+                empShift.innerHTML += `<option value="${shiftCode}">${shift.name}</option>`;
+            });
+        }
+
+        // Render employee shifts table
+        function renderEmployeeShiftsTable() {
+            const employeeShiftsBody = document.getElementById('employeeShiftsBody');
+            if (!employeeShiftsBody) return;
+            
+            employeeShiftsBody.innerHTML = '';
+            
+            if (employeeDatabase.length === 0) {
+                employeeShiftsBody.innerHTML = `
+                    <tr>
+                        <td colspan="4" class="empty-state">
+                            <i class="fas fa-users"></i>
+                            <p>No employee data available. Add employees first.</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            employeeDatabase.forEach(emp => {
+                const shiftOptions = Object.keys(shiftConfig).map(shiftCode => {
+                    const shift = shiftConfig[shiftCode];
+                    const selected = emp.shift === shiftCode ? 'selected' : '';
+                    return `<option value="${shiftCode}" ${selected}>${shift.name}</option>`;
+                }).join('');
+                
+                employeeShiftsBody.innerHTML += `
+                    <tr>
+                        <td>${escapeHtml(emp.name)}</td>
+                        <td><span class="shift-${emp.shift || 'morning'}">${shiftConfig[emp.shift]?.name || 'Morning Shift'}</span></td>
+                        <td>
+                            <select class="employee-shift-select" data-employee-id="${emp.id}" style="width: 100%; padding: 5px;">
+                                ${shiftOptions}
+                            </select>
+                        </td>
+                        <td>
+                            <button class="btn-ghost" onclick="updateEmployeeShift('${emp.id}')">
+                                <i class="fas fa-save"></i> Update
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            // Add event listeners to shift select elements
+            document.querySelectorAll('.employee-shift-select').forEach(select => {
+                select.addEventListener('change', function() {
+                    const employeeId = this.getAttribute('data-employee-id');
+                    updateEmployeeShift(employeeId);
+                });
+            });
+        }
+
+        // Update employee shift
+        function updateEmployeeShift(employeeId) {
+            const select = document.querySelector(`.employee-shift-select[data-employee-id="${employeeId}"]`);
+            const newShift = select.value;
+            
+            const index = employeeDatabase.findIndex(emp => emp.id === employeeId);
+            if (index !== -1) {
+                employeeDatabase[index].shift = newShift;
+                saveEmployeeDatabase();
+                renderEmployeeDatabase();
+                renderEmployeeShiftsTable();
+                
+                // Update attendance data if exists
+                if (Object.keys(perPerson).length > 0) {
+                    updateShiftDetailsInDashboard();
+                    applyFilterAndRender();
+                }
+                
+                showNotification('Employee shift updated successfully!');
+            }
+        }
+
+        // Update shift details in dashboard
+        function updateShiftDetailsInDashboard() {
+            for (const p in perPerson) {
+                const empDetails = getEmployeeDetails(p);
+                perPerson[p].details.shift = empDetails.shift || 'morning';
+                
+                // Update shift in all dates
+                for (const date in perPerson[p].dates) {
+                    perPerson[p].dates[date].shift = empDetails.shift || 'morning';
+                }
+            }
+        }
 
         // Setup PDF handlers
         function setupPdfHandlers() {
@@ -1607,7 +2546,7 @@
         function setupModalHandlers() {
             const modal = document.getElementById('employeeModal');
             const addBtn = document.getElementById('addEmployeeBtn');
-            const closeBtn = document.querySelector('.close-modal');
+            const closeBtn = document.querySelectorAll('.close-modal')[0];
             const cancelBtn = document.getElementById('cancelEmployeeBtn');
             const form = document.getElementById('employeeForm');
             const syncBtn = document.getElementById('syncEmployeesBtn');
@@ -1641,13 +2580,15 @@
         // Download Excel Template
         function downloadExcelTemplate() {
             // Create template data
+            const shiftOptions = Object.keys(shiftConfig).map(code => shiftConfig[code].name).join(', ');
+            
             const templateData = [
-                ['Employee Name', 'Designation', 'Posting Office', 'Contact Number'],
-                ['Dr. Nargis Lashari', 'Medical Officer', 'RHC Gambat', '03001234567'],
-                ['Dr. Ali Ahmed', 'Dental Surgeon', 'BHU Sultanabad', '03119876543'],
-                ['Dr. Sara Khan', 'Women Medical Officer', 'RHC Khipro', '03211234567'],
-                ['NOTE:', 'Fill all columns', 'No empty rows between data', 'Contact must be unique'],
-                ['IMPORTANT:', 'First row is header', 'Start data from row 2', 'Save as Excel file']
+                ['Employee Name', 'Designation', 'Posting Office', 'Contact Number', 'Shift'],
+                ['Dr. Nargis Lashari', 'Medical Officer', 'RHC Gambat', '03001234567', 'morning'],
+                ['Dr. Ali Ahmed', 'Dental Surgeon', 'BHU Sultanabad', '03119876543', 'morning'],
+                ['Dr. Sara Khan', 'Women Medical Officer', 'RHC Khipro', '03211234567', 'afternoon'],
+                ['NOTE:', 'Fill all columns', 'No empty rows between data', 'Contact must be unique', `Shift: ${shiftOptions}`],
+                ['IMPORTANT:', 'First row is header', 'Start data from row 2', 'Save as Excel file', 'Shift must match exactly']
             ];
 
             // Create workbook
@@ -1659,7 +2600,8 @@
                 { wch: 20 }, // Employee Name
                 { wch: 20 }, // Designation
                 { wch: 20 }, // Posting Office
-                { wch: 15 }  // Contact Number
+                { wch: 15 },  // Contact Number
+                { wch: 15 }   // Shift
             ];
             ws['!cols'] = colWidths;
 
@@ -1693,17 +2635,35 @@
 
                     for (let i = 1; i < jsonData.length; i++) {
                         const row = jsonData[i];
-                        if (!row || row.length < 4) continue;
+                        if (!row || row.length < 5) continue;
 
                         const name = (row[0] || '').toString().trim();
                         const designation = (row[1] || '').toString().trim();
                         const posting = (row[2] || '').toString().trim();
                         let contact = (row[3] || '').toString().trim();
+                        let shiftInput = (row[4] || 'morning').toString().trim();
 
                         // Validate row
                         if (!name || !designation || !posting || !contact) {
                             errorCount++;
                             continue;
+                        }
+
+                        // Find shift by name or code
+                        let shift = 'morning'; // Default
+                        const shiftLower = shiftInput.toLowerCase();
+                        
+                        // Check if input matches any shift code
+                        if (shiftConfig[shiftLower]) {
+                            shift = shiftLower;
+                        } else {
+                            // Check if input matches any shift name
+                            for (const shiftCode in shiftConfig) {
+                                if (shiftConfig[shiftCode].name.toLowerCase() === shiftLower) {
+                                    shift = shiftCode;
+                                    break;
+                                }
+                            }
                         }
 
                         // Format contact number (remove spaces, dashes, etc.)
@@ -1724,7 +2684,8 @@
                             name,
                             designation,
                             posting,
-                            contact
+                            contact,
+                            shift
                         });
 
                         successCount++;
@@ -1734,6 +2695,7 @@
                     employeeDatabase.push(...importedEmployees);
                     saveEmployeeDatabase();
                     renderEmployeeDatabase();
+                    renderEmployeeShiftsTable();
 
                     // Clear file input
                     event.target.value = '';
@@ -1772,6 +2734,7 @@
                 employeeDatabase = [];
                 saveEmployeeDatabase();
                 renderEmployeeDatabase();
+                renderEmployeeShiftsTable();
                 
                 // Update dashboard if data exists
                 if (Object.keys(perPerson).length > 0) {
@@ -1797,11 +2760,13 @@
                 document.getElementById('empDesignation').value = employee.designation;
                 document.getElementById('empPosting').value = employee.posting;
                 document.getElementById('empContact').value = employee.contact;
+                document.getElementById('empShift').value = employee.shift || 'morning';
             } else {
                 // Add mode
                 title.textContent = 'Add Employee';
                 form.reset();
                 document.getElementById('employeeId').value = '';
+                document.getElementById('empShift').value = 'morning';
             }
             
             modal.style.display = 'flex';
@@ -1824,6 +2789,7 @@
             const designation = document.getElementById('empDesignation').value.trim();
             const posting = document.getElementById('empPosting').value.trim();
             let contact = document.getElementById('empContact').value.trim();
+            const shift = document.getElementById('empShift').value;
 
             // Format contact number
             contact = contact.replace(/[\s\-\(\)]/g, '');
@@ -1861,7 +2827,8 @@
                         name,
                         designation,
                         posting,
-                        contact
+                        contact,
+                        shift
                     };
                 }
             } else {
@@ -1871,13 +2838,15 @@
                     name,
                     designation,
                     posting,
-                    contact
+                    contact,
+                    shift
                 };
                 employeeDatabase.push(newEmployee);
             }
 
             saveEmployeeDatabase();
             renderEmployeeDatabase();
+            renderEmployeeShiftsTable();
             closeEmployeeModal();
             
             // AUTO SYNC: Update attendance data with new employee details
@@ -1897,6 +2866,7 @@
                 employeeDatabase = employeeDatabase.filter(emp => emp.id !== id);
                 saveEmployeeDatabase();
                 renderEmployeeDatabase();
+                renderEmployeeShiftsTable();
                 
                 // AUTO SYNC: Update the dashboard if data exists
                 if (Object.keys(perPerson).length > 0) {
@@ -1945,13 +2915,57 @@
             }, 4000);
         }
 
+        // Get shift details
+        function getShiftDetails(shiftName) {
+            return shiftConfig[shiftName] || shiftConfig.morning;
+        }
+
+        // Convert time string to minutes
+        function timeToMinutes(timeStr) {
+            if (!timeStr) return 0;
+            const [hours, minutes] = timeStr.split(':').map(Number);
+            return hours * 60 + minutes;
+        }
+
+        // Calculate status based on shift
+        function calculateStatus(entry, dayOfWeek, shiftName) {
+            const shift = getShiftDetails(shiftName);
+            
+            if (dayOfWeek === 0) {
+                return 'Holiday (Sun)';
+            } else if (!entry.checkIn) {
+                return 'Absent';
+            } else {
+                const cin = timeStrToMinutes(entry.checkIn);
+                const cout = timeStrToMinutes(entry.checkOut || entry.checkIn);
+                
+                // Convert shift times to minutes
+                const lateAfter = timeToMinutes(shift.lateAfter);
+                let earlyBefore = timeToMinutes(shift.earlyBefore);
+                
+                // Special handling for Friday if enabled
+                if (dayOfWeek === 5 && shift.isFridaySpecial && shift.fridayEarlyBefore) {
+                    earlyBefore = timeToMinutes(shift.fridayEarlyBefore);
+                }
+                
+                if (entry.checkOut && cout < earlyBefore) {
+                    return 'Early';
+                } else if (cin > lateAfter) {
+                    return 'Late';
+                } else {
+                    return 'On Time';
+                }
+            }
+        }
+
         // Default employee details agar koi match na ho
         function getDefaultEmployeeDetails(senderKey) {
             return {
                 name: senderKey,
                 designation: '-',
                 posting: '-',
-                contact: senderKey.replace(/\D/g, '').length >= 7 ? senderKey.replace(/\D/g, '') : '-'
+                contact: senderKey.replace(/\D/g, '').length >= 7 ? senderKey.replace(/\D/g, '') : '-',
+                shift: 'morning'
             };
         }
 
@@ -2092,8 +3106,14 @@
                     fullName: empDetails.name,
                     designation: empDetails.designation,
                     posting: empDetails.posting,
-                    phone: empDetails.contact
+                    phone: empDetails.contact,
+                    shift: empDetails.shift
                 };
+                
+                // Update shift in all dates
+                for (const date in perPerson[p].dates) {
+                    perPerson[p].dates[date].shift = empDetails.shift;
+                }
                 
                 // Count if name was updated
                 if (oldName !== empDetails.name) {
@@ -2144,6 +3164,7 @@
                 
                 performers.push({
                     name: rec.details.fullName || p,
+                    shift: rec.details.shift || 'morning',
                     onTime: onTime,
                     totalWorkingDays: totalWorkingDays,
                     totalDays: dates.length,
@@ -2166,10 +3187,16 @@
             if (topPerformers.length > 0) {
                 topPerformers.forEach((performer, index) => {
                     const rankColors = ['#ffd700', '#c0c0c0', '#cd7f32', '#4a5568', '#4a5568'];
+                    const shiftClass = `shift-${performer.shift}`;
+                    const shiftText = shiftConfig[performer.shift]?.name || 'Morning Shift';
+                    
                     performersList.innerHTML += `
                         <div class="performer-card">
                             <div class="performer-rank" style="background: ${rankColors[index]}">${index + 1}</div>
                             <div class="performer-name">${escapeHtml(performer.name)}</div>
+                            <div class="performer-stats">
+                                <span class="${shiftClass}">${shiftText}</span>
+                            </div>
                             <div class="performer-stats">
                                 On Time: ${performer.onTime} / ${performer.totalWorkingDays} days
                             </div>
@@ -2256,7 +3283,7 @@
             if (employeeDatabase.length === 0) {
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="5" class="empty-state">
+                        <td colspan="6" class="empty-state">
                             <i class="fas fa-users"></i>
                             <p>No employee data available. Add employees to see them here.</p>
                         </td>
@@ -2266,12 +3293,16 @@
             }
             
             employeeDatabase.forEach(emp => {
+                const shiftClass = `shift-${emp.shift || 'morning'}`;
+                const shiftName = shiftConfig[emp.shift]?.name || 'Morning Shift';
+                
                 tbody.insertAdjacentHTML('beforeend', `
                     <tr>
                         <td>${escapeHtml(emp.name)}</td>
                         <td>${escapeHtml(emp.designation)}</td>
                         <td>${escapeHtml(emp.posting)}</td>
                         <td>${escapeHtml(emp.contact)}</td>
+                        <td><span class="${shiftClass}">${shiftName}</span></td>
                         <td>
                             <button class="btn-ghost" onclick="openEmployeeModal(${JSON.stringify(emp).replace(/"/g, '&quot;')})">
                                 <i class="fas fa-edit"></i> Edit
@@ -2488,7 +3519,7 @@
             return msgs;
         }
 
-        // Build per-person records & locations - FIXED SUNDAY DETECTION
+        // Build per-person records & locations - FIXED SUNDAY DETECTION WITH SHIFTS
         function buildData(messages) {
             perPerson = {};
             locationItems = [];
@@ -2505,7 +3536,8 @@
                             fullName: empDetails.name,
                             designation: empDetails.designation,
                             posting: empDetails.posting,
-                            phone: empDetails.contact
+                            phone: empDetails.contact,
+                            shift: empDetails.shift || 'morning'
                         },
                         dates: {}
                     };
@@ -2516,6 +3548,7 @@
                         checkIn: null,
                         checkOut: null,
                         location: null,
+                        shift: empDetails.shift || 'morning',
                         rawMessages: []
                     };
                 }
@@ -2592,45 +3625,26 @@
                 }
             });
 
-            // Calculate status for each entry - FIXED Sunday detection
+            // Calculate status for each entry based on shift
             for (const p in perPerson) {
+                const shiftName = perPerson[p].details.shift || 'morning';
                 for (const d in perPerson[p].dates) {
                     const e = perPerson[p].dates[d];
                     const dayOfWeek = getDateDayOfWeek(d); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
                     
-                    // FIXED: Proper Sunday detection - Sunday is 0
-                    if (dayOfWeek === 0) {
-                        e.status = 'Holiday (Sun)';
-                        // Keep check-in/check-out data if available (for Sunday work)
-                        // But mark as holiday
-                    } else if (!e.checkIn) {
-                        e.status = 'Absent';
-                    } else {
-                        const cin = timeStrToMinutes(e.checkIn);
-                        const cout = timeStrToMinutes(e.checkOut || e.checkIn);
-                        
-                        // Special handling for Friday - use 12:00 PM as early time
-                        const earlyTime = (dayOfWeek === 5) ? FRIDAY_EARLY_TIME_MINS : EARLY_TIME_MINS;
-                        
-                        if (e.checkOut && cout < earlyTime) {
-                            e.status = 'Early';
-                        } else if (cin > LATE_TIME_MINS) {
-                            e.status = 'Late';
-                        } else {
-                            e.status = 'On Time';
-                        }
-                    }
+                    e.status = calculateStatus(e, dayOfWeek, shiftName);
                 }
             }
             
-            console.log('Built perPerson data:', perPerson);
+            console.log('Built perPerson data with shifts:', perPerson);
         }
 
-        // FIXED: Filtering and rendering with correct Sunday counting
+        // FIXED: Filtering and rendering with correct Sunday counting and shift filter
         function applyFilterAndRender() {
             const start = document.getElementById('startDate').value;
             const end = document.getElementById('endDate').value;
             const status = document.getElementById('statusFilter').value;
+            const shift = document.getElementById('shiftFilter').value;
             const search = (document.getElementById('searchBox').value || '').toLowerCase().trim();
 
             filteredPerPerson = {};
@@ -2651,11 +3665,19 @@
                     
                     if (!dateOk) continue;
                     const entry = perPerson[p].dates[d];
+                    
+                    // Shift filter
+                    if (shift && entry.shift !== shift) continue;
+                    
+                    // Status filter
                     if (status && entry.status !== status) continue;
+                    
+                    // Search filter
                     if (search) {
                         const hay = (p + ' ' + (entry.location || '') + ' ' + perPerson[p].details.posting + ' ' + perPerson[p].details.designation + ' ' + entry.rawMessages.map(r => r.text).join(' ')).toLowerCase();
                         if (!hay.includes(search)) continue;
                     }
+                    
                     if (!filteredPerPerson[p]) filteredPerPerson[p] = { details: perPerson[p].details, dates: {} };
                     filteredPerPerson[p].dates[d] = entry;
                 }
@@ -2679,7 +3701,7 @@
             const persons = Object.keys(filteredPerPerson).sort((a, b) => a.localeCompare(b));
             
             if (persons.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="8" class="empty-state"><i class="fas fa-users"></i><p>No attendance data available for selected filters.</p></td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="9" class="empty-state"><i class="fas fa-users"></i><p>No attendance data available for selected filters.</p></td></tr>`;
                 return;
             }
             
@@ -2707,6 +3729,10 @@
                             escapeHtml(e.location)) :
                         '-';
                     
+                    // Shift badge
+                    const shiftBadgeClass = `shift-${e.shift}`;
+                    const shiftName = shiftConfig[e.shift]?.name || 'Morning Shift';
+                    
                     tbody.insertAdjacentHTML('beforeend', `<tr>
                         <td>${escapeHtml(rec.details.fullName)}</td>
                         <td>${escapeHtml(rec.details.designation)}</td>
@@ -2715,13 +3741,14 @@
                         <td>${escapeHtml(e.checkIn || '-')}</td>
                         <td>${escapeHtml(e.checkOut || '-')}</td>
                         <td><span class="${cls}">${escapeHtml(e.status)}</span></td>
+                        <td><span class="${shiftBadgeClass}">${shiftName}</span></td>
                         <td>${locHtml}</td>
                     </tr>`);
                 }
             }
         }
 
-        // FIXED: Render daily summary with correct Sunday counting
+        // FIXED: Render daily summary with correct Sunday counting and shift
         function renderDailySummary() {
             const tbody = document.querySelector('#dailySummaryTable tbody');
             tbody.innerHTML = '';
@@ -2731,7 +3758,7 @@
             const persons = Object.keys(filteredPerPerson).sort((a, b) => a.localeCompare(b));
             
             if (persons.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="9" class="empty-state"><i class="fas fa-chart-bar"></i><p>No data for selected filters.</p></td></tr>';
+                tbody.innerHTML = '<tr><td colspan="10" class="empty-state"><i class="fas fa-chart-bar"></i><p>No data for selected filters.</p></td></tr>';
                 return;
             }
             
@@ -2834,6 +3861,10 @@
                 // FIXED: Accuracy calculation should exclude Sundays
                 const accuracy = totalPersonWorkingDays > 0 ? Math.round((onTime / totalPersonWorkingDays) * 100) : 0;
                 
+                // Shift badge
+                const shiftBadgeClass = `shift-${rec.details.shift || 'morning'}`;
+                const shiftName = shiftConfig[rec.details.shift]?.name || 'Morning Shift';
+                
                 tbody.insertAdjacentHTML('beforeend', `<tr>
                     <td>${escapeHtml(rec.details.fullName)}</td>
                     <td>${totalPersonDays}</td>
@@ -2843,6 +3874,7 @@
                     <td>${early}</td>
                     <td>${absent}</td>
                     <td>${sunday}</td>
+                    <td><span class="${shiftBadgeClass}">${shiftName}</span></td>
                     <td><strong>${accuracy}%</strong></td>
                 </tr>`);
             }
@@ -3011,7 +4043,7 @@
             const monthOverview = document.getElementById('performanceMonthOverview');
             
             if (persons.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="10" class="empty-state"><i class="fas fa-chart-bar"></i><p>No performance data available. Process attendance data first.</p></td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="11" class="empty-state"><i class="fas fa-chart-bar"></i><p>No performance data available. Process attendance data first.</p></td></tr>`;
                 return;
             }
             
@@ -3044,6 +4076,7 @@
                 performers.push({
                     name: rec.details.fullName,
                     designation: rec.details.designation,
+                    shift: rec.details.shift || 'morning',
                     totalDays: totalPersonDays,
                     workingDays: totalWorkingDays,
                     onTime: onTime,
@@ -3061,11 +4094,15 @@
             tbody.innerHTML = '';
             performers.forEach((performer, index) => {
                 const performanceClass = getPerformanceClass(performer.accuracy);
+                const shiftClass = `shift-${performer.shift}`;
+                const shiftName = shiftConfig[performer.shift]?.name || 'Morning Shift';
+                
                 tbody.innerHTML += `
                     <tr>
                         <td><strong>${index + 1}</strong></td>
                         <td>${escapeHtml(performer.name)}</td>
                         <td>${escapeHtml(performer.designation)}</td>
+                        <td><span class="${shiftClass}">${shiftName}</span></td>
                         <td>${performer.totalDays}</td>
                         <td>${performer.workingDays}</td>
                         <td>${performer.onTime}</td>
@@ -3586,8 +4623,8 @@
             const dateLabels = dateList.map(d => { const dd = String(d.getDate()).padStart(2, '0'); const mm = String(d.getMonth() + 1).padStart(2, '0'); const yy = d.getFullYear(); return `${dd}/${mm}/${yy}`; });
 
             // Build header rows
-            const headerRow1 = ['Emp Name', 'Designation', 'Posting Office', 'Contact #'];
-            const headerRow2 = ['', '', '', ''];
+            const headerRow1 = ['Emp Name', 'Designation', 'Posting Office', 'Contact #', 'Shift'];
+            const headerRow2 = ['', '', '', '', ''];
             dateLabels.forEach(lbl => { headerRow1.push(lbl); headerRow1.push(''); headerRow1.push(''); headerRow2.push('Check-In'); headerRow2.push('Check-Out'); headerRow2.push('Status'); });
 
             // Data rows
@@ -3595,7 +4632,8 @@
             const dataRows = [];
             for (const p of persons) {
                 const rec = perPerson[p];
-                const row = [rec.details.fullName, rec.details.designation, rec.details.posting, rec.details.phone];
+                const shiftName = shiftConfig[rec.details.shift]?.name || 'Morning Shift';
+                const row = [rec.details.fullName, rec.details.designation, rec.details.posting, rec.details.phone, shiftName];
                 dateLabels.forEach(dateStr => {
                     const entry = perPerson[p].dates[dateStr];
                     const dayOfWeek = getDateDayOfWeek(dateStr);
@@ -3625,7 +4663,7 @@
             // Apply merges for date headers
             ws['!merges'] = ws['!merges'] || [];
             for (let i = 0; i < dateLabels.length; i++) {
-                const startCol = 4 + i * 3;
+                const startCol = 5 + i * 3;
                 ws['!merges'].push({ s: { r: 0, c: startCol }, e: { r: 0, c: startCol + 2 } });
             }
 
@@ -3637,9 +4675,9 @@
                     if (!ws[cellRef]) ws[cellRef] = { v: aoa[r][c] || '' };
 
                     if (r < 2) {
-                        ws[cellRef].s = (c < 4) ? headerNameColumnStyle : headerStyle;
+                        ws[cellRef].s = (c < 5) ? headerNameColumnStyle : headerStyle;
                     } else {
-                        ws[cellRef].s = (c < 4) ? nameColumnStyle : cellStyle;
+                        ws[cellRef].s = (c < 5) ? nameColumnStyle : cellStyle;
                     }
                 }
             }
@@ -3657,7 +4695,7 @@
             XLSX.utils.book_append_sheet(wb, ws, 'Detailed_Attendance');
 
             // Also append daily summary sheet - FIXED to exclude Sundays from accuracy calculation
-            const summaryHeader = ['Emp Name', 'Designation', 'Posting Office', 'Contact #', 'Total Days', 'Present', 'On Time', 'Late', 'Early', 'Absent', 'Sunday', 'Working Days', 'Accuracy %'];
+            const summaryHeader = ['Emp Name', 'Designation', 'Posting Office', 'Contact #', 'Shift', 'Total Days', 'Present', 'On Time', 'Late', 'Early', 'Absent', 'Sunday', 'Working Days', 'Accuracy %'];
             const summaryData = [summaryHeader];
             
             // Calculate summary data for each person
@@ -3684,12 +4722,14 @@
                 const totalWorkingDays = totalPersonDays - sunday;
                 const present = onTime + late + early;
                 const accuracy = totalWorkingDays > 0 ? Math.round((onTime / totalWorkingDays) * 100) : 0;
+                const shiftName = shiftConfig[rec.details.shift]?.name || 'Morning Shift';
                 
                 summaryData.push([
                     rec.details.fullName,
                     rec.details.designation,
                     rec.details.posting,
                     rec.details.phone,
+                    shiftName,
                     totalPersonDays,
                     present,
                     onTime,
@@ -3731,8 +4771,14 @@
             XLSX.utils.book_append_sheet(wb, ws2, 'Person_Summary');
 
             // Also add Employee Database sheet
-            const empHeader = ['Emp Name', 'Designation', 'Posting Office', 'Contact #'];
-            const empData = [empHeader, ...employeeDatabase.map(emp => [emp.name, emp.designation, emp.posting, emp.contact])];
+            const empHeader = ['Emp Name', 'Designation', 'Posting Office', 'Contact #', 'Shift'];
+            const empData = [empHeader, ...employeeDatabase.map(emp => [
+                emp.name, 
+                emp.designation, 
+                emp.posting, 
+                emp.contact,
+                shiftConfig[emp.shift]?.name || 'Morning Shift'
+            ])];
             const ws3 = XLSX.utils.aoa_to_sheet(empData);
             
             // Apply styles to Employee sheet
@@ -3750,6 +4796,39 @@
             }
             
             XLSX.utils.book_append_sheet(wb, ws3, 'Employee_Database');
+
+            // Also add Shift Configuration sheet
+            const shiftHeader = ['Shift Code', 'Shift Name', 'Start Time', 'End Time', 'Late After', 'Early Before', 'Friday Early', 'Color'];
+            const shiftData = [shiftHeader, ...Object.keys(shiftConfig).map(code => {
+                const shift = shiftConfig[code];
+                return [
+                    shift.code,
+                    shift.name,
+                    formatTimeForDisplay(shift.start),
+                    formatTimeForDisplay(shift.end),
+                    formatTimeForDisplay(shift.lateAfter),
+                    formatTimeForDisplay(shift.earlyBefore),
+                    shift.isFridaySpecial ? formatTimeForDisplay(shift.fridayEarlyBefore) : 'N/A',
+                    shift.color
+                ];
+            })];
+            const ws4 = XLSX.utils.aoa_to_sheet(shiftData);
+            
+            // Apply styles to Shift sheet
+            for (let r = 0; r < shiftData.length; r++) {
+                for (let c = 0; c < shiftHeader.length; c++) {
+                    const cellRef = XLSX.utils.encode_cell({ c: c, r: r });
+                    if (!ws4[cellRef]) ws4[cellRef] = { v: shiftData[r][c] || '' };
+                    
+                    if (r === 0) {
+                        ws4[cellRef].s = headerStyle;
+                    } else {
+                        ws4[cellRef].s = cellStyle;
+                    }
+                }
+            }
+            
+            XLSX.utils.book_append_sheet(wb, ws4, 'Shift_Configuration');
 
             // write file
             XLSX.writeFile(wb, 'Attendance_Grouped_By_Date.xlsx');
@@ -3866,6 +4945,7 @@
                             <tr style="background-color: #0e588c; color: white;">
                                 <th style="padding: 10px; text-align: left;">Rank</th>
                                 <th style="padding: 10px; text-align: left;">Employee</th>
+                                <th style="padding: 10px; text-align: left;">Shift</th>
                                 <th style="padding: 10px; text-align: left;">On Time</th>
                                 <th style="padding: 10px; text-align: left;">Working Days</th>
                                 <th style="padding: 10px; text-align: left;">Accuracy</th>
@@ -3946,9 +5026,11 @@
                 
                 const totalWorkingDays = dates.length - sunday;
                 const accuracy = totalWorkingDays > 0 ? Math.round((onTime / totalWorkingDays) * 100) : 0;
+                const shiftName = shiftConfig[rec.details.shift]?.name || 'Morning Shift';
                 
                 performers.push({
                     name: rec.details.fullName || p,
+                    shift: shiftName,
                     onTime: onTime,
                     workingDays: totalWorkingDays,
                     accuracy: accuracy
@@ -3965,6 +5047,7 @@
                     <tr style="border-bottom: 1px solid #ddd;">
                         <td style="padding: 10px;">${index + 1}</td>
                         <td style="padding: 10px;">${escapeHtml(performer.name)}</td>
+                        <td style="padding: 10px;">${escapeHtml(performer.shift)}</td>
                         <td style="padding: 10px;">${performer.onTime}</td>
                         <td style="padding: 10px;">${performer.workingDays}</td>
                         <td style="padding: 10px; font-weight: bold; color: ${performer.accuracy >= 70 ? '#16a34a' : performer.accuracy >= 50 ? '#f59e0b' : '#ef4444'}">
