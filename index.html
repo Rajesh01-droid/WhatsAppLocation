@@ -1640,6 +1640,7 @@
                                             <th>Posting Office</th>
                                             <th>Contact #</th>
                                             <th>Shift</th>
+                                            <th>Sync Status</th>
                                             <th>Actions</th>
                                         </tr>
                                     </thead>
@@ -1796,23 +1797,24 @@
             <form id="employeeForm">
                 <input type="hidden" id="employeeId">
                 <div class="form-group">
-                    <label for="empName">Employee Name</label>
+                    <label for="empName">Employee Name *</label>
                     <input type="text" id="empName" required>
                 </div>
                 <div class="form-group">
-                    <label for="empDesignation">Designation</label>
+                    <label for="empDesignation">Designation *</label>
                     <input type="text" id="empDesignation" required>
                 </div>
                 <div class="form-group">
-                    <label for="empPosting">Posting Office</label>
+                    <label for="empPosting">Posting Office *</label>
                     <input type="text" id="empPosting" required>
                 </div>
                 <div class="form-group">
-                    <label for="empContact">Contact Number</label>
+                    <label for="empContact">Contact Number *</label>
                     <input type="text" id="empContact" placeholder="e.g., 03001234567" required>
+                    <small style="color: var(--muted);">Must be unique, 10-12 digits</small>
                 </div>
                 <div class="form-group">
-                    <label for="empShift">Shift</label>
+                    <label for="empShift">Shift *</label>
                     <select id="empShift" required>
                         <!-- Shift options will be populated dynamically -->
                     </select>
@@ -1837,18 +1839,18 @@
                 <input type="hidden" id="shiftIndex">
                 
                 <div class="form-group">
-                    <label for="shiftName">Shift Name</label>
+                    <label for="shiftName">Shift Name *</label>
                     <input type="text" id="shiftName" placeholder="e.g., Morning Shift, Night Shift" required>
                 </div>
                 
                 <div class="form-group">
-                    <label for="shiftCode">Shift Code (Unique)</label>
+                    <label for="shiftCode">Shift Code (Unique) *</label>
                     <input type="text" id="shiftCode" placeholder="e.g., Morning, night, custom1" required>
                     <small style="color: var(--muted);">Use simple lowercase code without spaces (must be unique)</small>
                 </div>
                 
                 <div class="form-group">
-                    <label>Shift Timings</label>
+                    <label>Shift Timings *</label>
                     <div class="time-input-group">
                         <div>
                             <label for="startTime">Start Time</label>
@@ -1862,7 +1864,7 @@
                 </div>
                 
                 <div class="form-group">
-                    <label>Late & Early Rules</label>
+                    <label>Late & Early Rules *</label>
                     <div class="time-input-group">
                         <div>
                             <label for="lateAfter">Late After (HH:MM)</label>
@@ -1917,8 +1919,11 @@
     </button>
 
     <script>
-        // Configuration
-        // Default shift configurations - Editable by user
+        // ================================================
+        // ENHANCED DATA ACCURACY SYSTEM
+        // ================================================
+
+        // Configuration - Editable by user
         let shiftConfig = {
             Morning: {
                 name: 'Morning Shift',
@@ -1955,8 +1960,17 @@
             }
         };
 
+        // ================================================
+        // ENHANCED EMPLOYEE DATABASE WITH UNIQUE ID SYSTEM
+        // ================================================
+        
         // Employee Database - will be loaded from localStorage
         let employeeDatabase = [];
+        
+        // Track all unique identifiers to prevent duplicates
+        let employeeIdentifiers = new Set();
+        
+        // Data processing variables
         let parsedMessages = [];
         let perPerson = {};
         let locationItems = [];
@@ -1968,1355 +1982,387 @@
         };
         let activeFilter = 'all';
 
-        // Initialize on page load
-        window.addEventListener('load', function() {
-            window.scrollTo(0, 0);
-            
-            // Set default dates to today
-            const today = new Date().toISOString().split('T')[0];
-            document.getElementById('startDate').value = today;
-            document.getElementById('endDate').value = today;
-            
-            // Load employee database from localStorage
-            loadEmployeeDatabase();
-            
-            // Load shift configuration from localStorage
-            loadShiftConfig();
-            
-            // Initialize empty employee database
-            renderEmployeeDatabase();
-            
-            // Render shift cards
-            renderShiftCards();
-            
-            // Update shift filter dropdown
-            updateShiftFilter();
-            
-            // Update employee form shift dropdown
-            updateEmployeeShiftDropdown();
-            
-            // Setup modal handlers
-            setupModalHandlers();
-            
-            // Setup Excel handlers
-            setupExcelHandlers();
-            
-            // Setup delete all button
-            document.getElementById('deleteAllEmployeesBtn').addEventListener('click', deleteAllEmployees);
-            
-            // Setup PDF report button
-            setupPdfHandlers();
-            
-            // Setup shift management buttons
-            setupShiftHandlers();
-        });
+        // ================================================
+        // DATA NORMALIZATION FUNCTIONS (CRITICAL FOR ACCURACY)
+        // ================================================
 
-        // Load shift configuration from localStorage
-        function loadShiftConfig() {
-            const saved = localStorage.getItem('shiftConfig');
-            if (saved) {
-                shiftConfig = JSON.parse(saved);
-            }
-        }
-
-        // Save shift configuration to localStorage
-        function saveShiftConfig() {
-            localStorage.setItem('shiftConfig', JSON.stringify(shiftConfig));
-        }
-
-        // Setup shift handlers
-        function setupShiftHandlers() {
-            const configureShiftsBtn = document.getElementById('configureShiftsBtn');
-            const addShiftBtn = document.getElementById('addShiftBtn');
-            const resetShiftsBtn = document.getElementById('resetShiftsBtn');
-            const shiftModal = document.getElementById('shiftModal');
-            const closeShiftModal = shiftModal.querySelector('.close-modal');
-            const cancelShiftBtn = document.getElementById('cancelShiftBtn');
-            const shiftForm = document.getElementById('shiftForm');
-            const isFridaySpecial = document.getElementById('isFridaySpecial');
-
-            configureShiftsBtn.addEventListener('click', () => {
-                // Switch to shifts tab
-                document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
-                document.querySelector('[data-tab="shiftsTab"]').classList.add('active');
-                document.querySelectorAll('.tab-pane').forEach(p => p.style.display = 'none');
-                document.getElementById('shiftsTab').style.display = 'block';
-            });
-
-            addShiftBtn.addEventListener('click', () => openShiftModal());
-            resetShiftsBtn.addEventListener('click', resetShiftsToDefault);
-
-            closeShiftModal.addEventListener('click', () => closeShiftModal());
-            cancelShiftBtn.addEventListener('click', () => closeShiftModal());
-
-            shiftForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                saveShift();
-            });
-
-            isFridaySpecial.addEventListener('change', function() {
-                document.getElementById('fridayTimeContainer').style.display = 
-                    this.checked ? 'block' : 'none';
-            });
-
-            // Close modal when clicking outside
-            window.addEventListener('click', (e) => {
-                if (e.target === shiftModal) {
-                    closeShiftModal();
+        /**
+         * Generate a unique identifier for an employee
+         * Priority: Phone > Name + Designation hash
+         */
+        function generateEmployeeId(employeeData) {
+            // Priority 1: Phone number (most reliable)
+            if (employeeData.contact && employeeData.contact.trim()) {
+                const phone = normalizePhone(employeeData.contact);
+                if (phone && phone.length >= 7) {
+                    return `PHONE_${phone}`;
                 }
-            });
+            }
+            
+            // Priority 2: Name + Designation hash (fallback)
+            const name = normalizeName(employeeData.name || '');
+            const designation = normalizeText(employeeData.designation || '');
+            const hashString = `${name}_${designation}`;
+            return `HASH_${simpleHash(hashString)}`;
         }
 
-        // Open shift modal
-        function openShiftModal(shiftCode = null) {
-            const modal = document.getElementById('shiftModal');
-            const title = document.getElementById('shiftModalTitle');
-            const form = document.getElementById('shiftForm');
+        /**
+         * Normalize phone number - remove all non-digits
+         */
+        function normalizePhone(phone) {
+            if (!phone) return '';
+            let normalized = phone.toString().trim();
+            // Remove all non-digit characters
+            normalized = normalized.replace(/\D/g, '');
             
-            if (shiftCode && shiftConfig[shiftCode]) {
-                // Edit mode
-                const shift = shiftConfig[shiftCode];
-                title.textContent = 'Edit Shift';
-                document.getElementById('shiftId').value = shiftCode;
-                document.getElementById('shiftIndex').value = shiftCode;
-                document.getElementById('shiftName').value = shift.name;
-                document.getElementById('shiftCode').value = shift.code;
-                document.getElementById('startTime').value = shift.start;
-                document.getElementById('endTime').value = shift.end;
-                document.getElementById('lateAfter').value = shift.lateAfter;
-                document.getElementById('earlyBefore').value = shift.earlyBefore;
-                document.getElementById('shiftColor').value = shift.color;
-                document.getElementById('isFridaySpecial').checked = shift.isFridaySpecial;
-                document.getElementById('fridayEarlyBefore').value = shift.fridayEarlyBefore || '';
-                document.getElementById('fridayTimeContainer').style.display = 
-                    shift.isFridaySpecial ? 'block' : 'none';
-            } else {
-                // Add mode
-                title.textContent = 'Add Shift';
-                form.reset();
-                document.getElementById('shiftId').value = '';
-                document.getElementById('shiftIndex').value = '';
-                document.getElementById('shiftColor').value = '#1565c0';
-                document.getElementById('isFridaySpecial').checked = false;
-                document.getElementById('fridayTimeContainer').style.display = 'none';
+            // For Pakistan numbers: remove leading 0, add 92
+            if (normalized.length === 11 && normalized.startsWith('0')) {
+                normalized = '92' + normalized.substring(1);
+            }
+            // For 10-digit numbers: add 92
+            if (normalized.length === 10) {
+                normalized = '92' + normalized;
             }
             
-            modal.style.display = 'flex';
+            return normalized;
         }
 
-        // Close shift modal
-        function closeShiftModal() {
-            const modal = document.getElementById('shiftModal');
-            const form = document.getElementById('shiftForm');
+        /**
+         * Normalize name - consistent formatting
+         */
+        function normalizeName(name) {
+            if (!name) return '';
+            let normalized = name.toString().trim();
             
-            modal.style.display = 'none';
-            form.reset();
-            document.getElementById('shiftId').value = '';
-            document.getElementById('fridayTimeContainer').style.display = 'none';
+            // Remove extra spaces
+            normalized = normalized.replace(/\s+/g, ' ');
+            
+            // Remove common prefixes/suffixes
+            normalized = normalized.replace(/^dr\.?\s*/i, '');
+            normalized = normalized.replace(/^mr\.?\s*/i, '');
+            normalized = normalized.replace(/^mrs\.?\s*/i, '');
+            normalized = normalized.replace(/^ms\.?\s*/i, '');
+            normalized = normalized.replace(/\s+\([^)]*\)/g, ''); // Remove text in parentheses
+            
+            // Convert to lowercase for comparison
+            normalized = normalized.toLowerCase();
+            
+            return normalized;
         }
 
-        // Save shift
-        function saveShift() {
-            const shiftId = document.getElementById('shiftId').value;
-            const shiftIndex = document.getElementById('shiftIndex').value;
-            const name = document.getElementById('shiftName').value.trim();
-            const code = document.getElementById('shiftCode').value.trim().toLowerCase();
-            const start = document.getElementById('startTime').value;
-            const end = document.getElementById('endTime').value;
-            const lateAfter = document.getElementById('lateAfter').value;
-            const earlyBefore = document.getElementById('earlyBefore').value;
-            const color = document.getElementById('shiftColor').value;
-            const isFridaySpecial = document.getElementById('isFridaySpecial').checked;
-            const fridayEarlyBefore = document.getElementById('fridayEarlyBefore').value;
-
-            // Validation
-            if (!name || !code || !start || !end || !lateAfter || !earlyBefore) {
-                alert('Please fill all required fields');
-                return;
-            }
-
-            // Check for duplicate code (edit mode mein current shift ko exclude karein)
-            if (!shiftId && shiftConfig[code]) {
-                alert('Shift with this code already exists!');
-                return;
-            }
-
-            // Check if code changed in edit mode
-            if (shiftId && shiftId !== code && shiftConfig[code]) {
-                alert('Shift with this code already exists!');
-                return;
-            }
-
-            const newShift = {
-                name,
-                code,
-                start,
-                end,
-                lateAfter,
-                earlyBefore,
-                fridayEarlyBefore: isFridaySpecial ? fridayEarlyBefore : '',
-                isFridaySpecial,
-                color
-            };
-
-            if (shiftId) {
-                // Update existing shift
-                // If code changed, delete old and create new
-                if (shiftId !== code) {
-                    delete shiftConfig[shiftId];
-                }
-                shiftConfig[code] = newShift;
-            } else {
-                // Add new shift
-                shiftConfig[code] = newShift;
-            }
-
-            saveShiftConfig();
-            renderShiftCards();
-            updateShiftFilter();
-            updateEmployeeShiftDropdown();
-            closeShiftModal();
+        /**
+         * Normalize text - for designations, posting offices, etc.
+         */
+        function normalizeText(text) {
+            if (!text) return '';
+            let normalized = text.toString().trim();
             
-            // Update attendance data if exists
-            if (Object.keys(perPerson).length > 0) {
-                updateShiftDetailsInDashboard();
-                applyFilterAndRender();
-            }
+            // Remove extra spaces
+            normalized = normalized.replace(/\s+/g, ' ');
             
-            showNotification(`Shift ${shiftId ? 'updated' : 'added'} successfully!`);
+            // Convert to lowercase for comparison
+            normalized = normalized.toLowerCase();
+            
+            return normalized;
         }
 
-        // Delete shift
-        function deleteShift(shiftCode) {
-            if (Object.keys(shiftConfig).length <= 1) {
-                alert('You must have at least one shift configuration.');
-                return;
+        /**
+         * Simple hash function for generating fallback IDs
+         */
+        function simpleHash(str) {
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+                const char = str.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash = hash & hash; // Convert to 32bit integer
             }
+            return Math.abs(hash).toString(16);
+        }
+
+        /**
+         * Generate a display ID for user reference
+         */
+        function generateDisplayId(employeeData) {
+            // Use first 3 letters of name + last 4 digits of phone
+            const name = normalizeName(employeeData.name || 'UNKNOWN');
+            const phone = normalizePhone(employeeData.contact || '');
+            const namePart = name.substring(0, 3).toUpperCase();
+            const phonePart = phone.substring(phone.length - 4);
             
-            // Check if any employee is using this shift
-            const employeesUsingShift = employeeDatabase.filter(emp => emp.shift === shiftCode);
-            if (employeesUsingShift.length > 0) {
-                if (!confirm(`${employeesUsingShift.length} employee(s) are using this shift. They will be moved to Morning shift. Delete anyway?`)) {
-                    return;
-                }
-                
-                // Move employees to Morning shift
-                employeeDatabase.forEach(emp => {
-                    if (emp.shift === shiftCode) {
-                        emp.shift = 'Morning';
+            return `${namePart}${phonePart}`;
+        }
+
+        // ================================================
+        // ENHANCED EMPLOYEE MATCHING SYSTEM
+        // ================================================
+
+        /**
+         * Find employee by multiple criteria (phone, name, etc.)
+         * Returns matching employee or null
+         */
+        function findEmployee(employeeData) {
+            if (!employeeData) return null;
+            
+            const searchPhone = normalizePhone(employeeData.contact);
+            const searchName = normalizeName(employeeData.name);
+            const searchDesignation = normalizeText(employeeData.designation);
+            
+            // Priority 1: Exact phone match
+            if (searchPhone && searchPhone.length >= 7) {
+                for (const emp of employeeDatabase) {
+                    const empPhone = normalizePhone(emp.contact);
+                    if (empPhone === searchPhone) {
+                        return emp;
                     }
-                });
-                saveEmployeeDatabase();
-                renderEmployeeDatabase();
+                }
             }
             
-            if (confirm(`Are you sure you want to delete the "${shiftConfig[shiftCode].name}" shift?`)) {
-                delete shiftConfig[shiftCode];
-                saveShiftConfig();
-                renderShiftCards();
-                updateShiftFilter();
-                updateEmployeeShiftDropdown();
-                
-                // Update attendance data if exists
-                if (Object.keys(perPerson).length > 0) {
-                    updateShiftDetailsInDashboard();
-                    applyFilterAndRender();
-                }
-                
-                showNotification('Shift deleted successfully!');
-            }
-        }
-
-        // Reset shifts to default
-        function resetShiftsToDefault() {
-            if (confirm('Are you sure you want to reset all shifts to default? This cannot be undone.')) {
-                shiftConfig = {
-                    Morning: {
-                        name: 'Morning Shift',
-                        code: 'Morning',
-                        start: '08:46',
-                        end: '14:57',
-                        lateAfter: '08:46',
-                        earlyBefore: '14:57',
-                        fridayEarlyBefore: '12:27',
-                        isFridaySpecial: true,
-                        color: '#1565c0'
-                    },
-                    afternoon: {
-                        name: 'Afternoon Shift',
-                        code: 'afternoon',
-                        start: '12:00',
-                        end: '20:00',
-                        lateAfter: '12:00',
-                        earlyBefore: '20:00',
-                        fridayEarlyBefore: '20:00',
-                        isFridaySpecial: false,
-                        color: '#ef6c00'
-                    },
-                    night: {
-                        name: 'Night Shift',
-                        code: 'night',
-                        start: '20:00',
-                        end: '08:00',
-                        lateAfter: '20:00',
-                        earlyBefore: '08:00',
-                        fridayEarlyBefore: '08:00',
-                        isFridaySpecial: false,
-                        color: '#7b1fa2'
+            // Priority 2: Phone number similarity (last 7 digits)
+            if (searchPhone && searchPhone.length >= 7) {
+                const last7Digits = searchPhone.substring(searchPhone.length - 7);
+                for (const emp of employeeDatabase) {
+                    const empPhone = normalizePhone(emp.contact);
+                    if (empPhone && empPhone.endsWith(last7Digits)) {
+                        return emp;
                     }
-                };
-                
-                saveShiftConfig();
-                renderShiftCards();
-                updateShiftFilter();
-                updateEmployeeShiftDropdown();
-                
-                // Update attendance data if exists
-                if (Object.keys(perPerson).length > 0) {
-                    updateShiftDetailsInDashboard();
-                    applyFilterAndRender();
-                }
-                
-                showNotification('Shifts reset to default successfully!');
-            }
-        }
-
-        // Render shift cards
-        function renderShiftCards() {
-            const shiftCards = document.getElementById('shiftCards');
-            const shiftCardsTab = document.getElementById('shiftCardsTab');
-            const activeShiftRules = document.getElementById('activeShiftRules');
-            
-            if (!shiftCards || !shiftCardsTab || !activeShiftRules) return;
-            
-            shiftCards.innerHTML = '';
-            shiftCardsTab.innerHTML = '';
-            activeShiftRules.innerHTML = '';
-            
-            Object.keys(shiftConfig).forEach(shiftCode => {
-                const shift = shiftConfig[shiftCode];
-                
-                // Determine CSS class based on shift code
-                let shiftClass = 'shift-custom';
-                if (shiftCode === 'Morning') shiftClass = 'shift-Morning';
-                else if (shiftCode === 'afternoon') shiftClass = 'shift-afternoon';
-                else if (shiftCode === 'night') shiftClass = 'shift-night';
-                
-                // Shift card for main display
-                shiftCards.innerHTML += `
-                    <div class="shift-card" style="border-left-color: ${shift.color}">
-                        <div class="shift-card-title">
-                            <span>${shift.name}</span>
-                            <span class="${shiftClass}">${shift.code}</span>
-                        </div>
-                        <div class="shift-card-times">
-                            <div class="shift-time-item">
-                                <div class="shift-time-label">Start Time</div>
-                                <div class="shift-time-value">${formatTimeForDisplay(shift.start)}</div>
-                            </div>
-                            <div class="shift-time-item">
-                                <div class="shift-time-label">End Time</div>
-                                <div class="shift-time-value">${formatTimeForDisplay(shift.end)}</div>
-                            </div>
-                            <div class="shift-time-item">
-                                <div class="shift-time-label">Late After</div>
-                                <div class="shift-time-value">${formatTimeForDisplay(shift.lateAfter)}</div>
-                            </div>
-                            <div class="shift-time-item">
-                                <div class="shift-time-label">Early Before</div>
-                                <div class="shift-time-value">${formatTimeForDisplay(shift.earlyBefore)}</div>
-                            </div>
-                        </div>
-                        ${shift.isFridaySpecial ? `
-                            <div style="margin-top: 10px; padding: 5px; background: #fff3cd; border-radius: 4px; font-size: 12px;">
-                                <i class="fas fa-star"></i> Friday Early: ${formatTimeForDisplay(shift.fridayEarlyBefore)}
-                            </div>
-                        ` : ''}
-                    </div>
-                `;
-                
-                // Shift card for shift management tab (with edit/delete buttons)
-                shiftCardsTab.innerHTML += `
-                    <div class="shift-card" style="border-left-color: ${shift.color}">
-                        <div class="shift-card-title">
-                            <span>${shift.name}</span>
-                            <span class="${shiftClass}">${shift.code}</span>
-                        </div>
-                        <div class="shift-card-times">
-                            <div class="shift-time-item">
-                                <div class="shift-time-label">Start Time</div>
-                                <div class="shift-time-value">${formatTimeForDisplay(shift.start)}</div>
-                            </div>
-                            <div class="shift-time-item">
-                                <div class="shift-time-label">End Time</div>
-                                <div class="shift-time-value">${formatTimeForDisplay(shift.end)}</div>
-                            </div>
-                            <div class="shift-time-item">
-                                <div class="shift-time-label">Late After</div>
-                                <div class="shift-time-value">${formatTimeForDisplay(shift.lateAfter)}</div>
-                            </div>
-                            <div class="shift-time-item">
-                                <div class="shift-time-label">Early Before</div>
-                                <div class="shift-time-value">${formatTimeForDisplay(shift.earlyBefore)}</div>
-                            </div>
-                        </div>
-                        ${shift.isFridaySpecial ? `
-                            <div style="margin-top: 10px; padding: 5px; background: #fff3cd; border-radius: 4px; font-size: 12px;">
-                                <i class="fas fa-star"></i> Friday Early: ${formatTimeForDisplay(shift.fridayEarlyBefore)}
-                            </div>
-                        ` : ''}
-                        <div class="shift-actions">
-                            <button class="btn-ghost" onclick="openShiftModal('${shiftCode}')">
-                                <i class="fas fa-edit"></i> Edit
-                            </button>
-                            <button class="btn-ghost" onclick="deleteShift('${shiftCode}')" style="color: var(--danger);">
-                                <i class="fas fa-trash"></i> Delete
-                            </button>
-                        </div>
-                    </div>
-                `;
-                
-                // Active shift rules
-                activeShiftRules.innerHTML += `
-                    <div class="shift-rule-item">
-                        <div class="shift-name">${shift.name}</div>
-                        <div class="shift-time">${formatTimeForDisplay(shift.start)} - ${formatTimeForDisplay(shift.end)}</div>
-                        <div style="font-size: 12px; color: #666;">
-                            Late after ${formatTimeForDisplay(shift.lateAfter)}
-                            ${shift.isFridaySpecial ? ` | Friday: ${formatTimeForDisplay(shift.fridayEarlyBefore)}` : ''}
-                        </div>
-                    </div>
-                `;
-            });
-            
-            // Render employee shifts table in shifts tab
-            renderEmployeeShiftsTable();
-        }
-
-        // Format time for display (24h to 12h)
-        function formatTimeForDisplay(time24) {
-            if (!time24) return '';
-            
-            const [hours, minutes] = time24.split(':').map(Number);
-            const period = hours >= 12 ? 'PM' : 'AM';
-            const hours12 = hours % 12 || 12;
-            
-            return `${hours12}:${minutes.toString().padStart(2, '0')} ${period}`;
-        }
-
-        // Update shift filter dropdown
-        function updateShiftFilter() {
-            const shiftFilter = document.getElementById('shiftFilter');
-            shiftFilter.innerHTML = '<option value="">All Shifts</option>';
-            
-            Object.keys(shiftConfig).forEach(shiftCode => {
-                const shift = shiftConfig[shiftCode];
-                shiftFilter.innerHTML += `<option value="${shiftCode}">${shift.name}</option>`;
-            });
-        }
-
-        // Update employee shift dropdown
-        function updateEmployeeShiftDropdown() {
-            const empShift = document.getElementById('empShift');
-            empShift.innerHTML = '';
-            
-            Object.keys(shiftConfig).forEach(shiftCode => {
-                const shift = shiftConfig[shiftCode];
-                empShift.innerHTML += `<option value="${shiftCode}">${shift.name}</option>`;
-            });
-        }
-
-        // Render employee shifts table
-        function renderEmployeeShiftsTable() {
-            const employeeShiftsBody = document.getElementById('employeeShiftsBody');
-            if (!employeeShiftsBody) return;
-            
-            employeeShiftsBody.innerHTML = '';
-            
-            if (employeeDatabase.length === 0) {
-                employeeShiftsBody.innerHTML = `
-                    <tr>
-                        <td colspan="4" class="empty-state">
-                            <i class="fas fa-users"></i>
-                            <p>No employee data available. Add employees first.</p>
-                        </td>
-                    </tr>
-                `;
-                return;
-            }
-            
-            employeeDatabase.forEach(emp => {
-                const shiftOptions = Object.keys(shiftConfig).map(shiftCode => {
-                    const shift = shiftConfig[shiftCode];
-                    const selected = emp.shift === shiftCode ? 'selected' : '';
-                    return `<option value="${shiftCode}" ${selected}>${shift.name}</option>`;
-                }).join('');
-                
-                employeeShiftsBody.innerHTML += `
-                    <tr>
-                        <td>${escapeHtml(emp.name)}</td>
-                        <td><span class="shift-${emp.shift || 'Morning'}">${shiftConfig[emp.shift]?.name || 'Morning Shift'}</span></td>
-                        <td>
-                            <select class="employee-shift-select" data-employee-id="${emp.id}" style="width: 100%; padding: 5px;">
-                                ${shiftOptions}
-                            </select>
-                        </td>
-                        <td>
-                            <button class="btn-ghost" onclick="updateEmployeeShift('${emp.id}')">
-                                <i class="fas fa-save"></i> Update
-                            </button>
-                        </td>
-                    </tr>
-                `;
-            });
-            
-            // Add event listeners to shift select elements
-            document.querySelectorAll('.employee-shift-select').forEach(select => {
-                select.addEventListener('change', function() {
-                    const employeeId = this.getAttribute('data-employee-id');
-                    updateEmployeeShift(employeeId);
-                });
-            });
-        }
-
-        // Update employee shift
-        function updateEmployeeShift(employeeId) {
-            const select = document.querySelector(`.employee-shift-select[data-employee-id="${employeeId}"]`);
-            const newShift = select.value;
-            
-            const index = employeeDatabase.findIndex(emp => emp.id === employeeId);
-            if (index !== -1) {
-                employeeDatabase[index].shift = newShift;
-                saveEmployeeDatabase();
-                renderEmployeeDatabase();
-                renderEmployeeShiftsTable();
-                
-                // Update attendance data if exists
-                if (Object.keys(perPerson).length > 0) {
-                    updateShiftDetailsInDashboard();
-                    applyFilterAndRender();
-                }
-                
-                showNotification('Employee shift updated successfully!');
-            }
-        }
-
-        // Update shift details in dashboard
-        function updateShiftDetailsInDashboard() {
-            for (const p in perPerson) {
-                const empDetails = getEmployeeDetails(p);
-                perPerson[p].details.shift = empDetails.shift || 'Morning';
-                
-                // Update shift in all dates
-                for (const date in perPerson[p].dates) {
-                    perPerson[p].dates[date].shift = empDetails.shift || 'Morning';
                 }
             }
+            
+            // Priority 3: Name + Designation combination
+            if (searchName && searchDesignation) {
+                for (const emp of employeeDatabase) {
+                    const empName = normalizeName(emp.name);
+                    const empDesignation = normalizeText(emp.designation);
+                    
+                    // Check if names are similar
+                    const nameSimilarity = calculateSimilarity(searchName, empName);
+                    const designationMatch = empDesignation === searchDesignation;
+                    
+                    if (nameSimilarity > 0.8 && designationMatch) {
+                        return emp;
+                    }
+                }
+            }
+            
+            // Priority 4: Name similarity alone
+            if (searchName) {
+                let bestMatch = null;
+                let highestSimilarity = 0;
+                
+                for (const emp of employeeDatabase) {
+                    const empName = normalizeName(emp.name);
+                    const similarity = calculateSimilarity(searchName, empName);
+                    
+                    if (similarity > highestSimilarity && similarity > 0.85) {
+                        highestSimilarity = similarity;
+                        bestMatch = emp;
+                    }
+                }
+                
+                if (bestMatch) return bestMatch;
+            }
+            
+            return null;
         }
 
-        // Setup PDF handlers
-        function setupPdfHandlers() {
-            const pdfReportBtn = document.getElementById('pdfReportBtn');
-            const downloadPdfBtn = document.getElementById('downloadPdfBtn');
-            const printReportBtn = document.getElementById('printReportBtn');
-            const downloadPerformancePdf = document.getElementById('downloadPerformancePdf');
-            const printPerformanceBtn = document.getElementById('printPerformanceBtn');
-
-            pdfReportBtn.addEventListener('click', generatePdfReport);
-            downloadPdfBtn.addEventListener('click', downloadPdfReport);
-            printReportBtn.addEventListener('click', printReport);
-            downloadPerformancePdf.addEventListener('click', downloadPerformancePdfReport);
-            printPerformanceBtn.addEventListener('click', printPerformanceReport);
+        /**
+         * Calculate string similarity (Levenshtein distance based)
+         */
+        function calculateSimilarity(str1, str2) {
+            if (!str1 || !str2) return 0;
+            
+            str1 = str1.toLowerCase();
+            str2 = str2.toLowerCase();
+            
+            // If strings are identical
+            if (str1 === str2) return 1;
+            
+            // If one contains the other
+            if (str1.includes(str2) || str2.includes(str1)) {
+                return 0.9;
+            }
+            
+            // Calculate Levenshtein distance
+            const track = Array(str2.length + 1).fill(null).map(() =>
+                Array(str1.length + 1).fill(null));
+            
+            for (let i = 0; i <= str1.length; i += 1) {
+                track[0][i] = i;
+            }
+            
+            for (let j = 0; j <= str2.length; j += 1) {
+                track[j][0] = j;
+            }
+            
+            for (let j = 1; j <= str2.length; j += 1) {
+                for (let i = 1; i <= str1.length; i += 1) {
+                    const indicator = str1[i - 1] === str2[j - 1] ? 0 : 1;
+                    track[j][i] = Math.min(
+                        track[j][i - 1] + 1, // deletion
+                        track[j - 1][i] + 1, // insertion
+                        track[j - 1][i - 1] + indicator, // substitution
+                    );
+                }
+            }
+            
+            const distance = track[str2.length][str1.length];
+            const maxLength = Math.max(str1.length, str2.length);
+            
+            return 1 - (distance / maxLength);
         }
 
-        // Load employee database from localStorage
+        // ================================================
+        // ENHANCED EMPLOYEE DATABASE MANAGEMENT
+        // ================================================
+
+        /**
+         * Load employee database from localStorage
+         * Rebuilds identifier set for duplicate prevention
+         */
         function loadEmployeeDatabase() {
             const saved = localStorage.getItem('employeeDatabase');
             if (saved) {
-                employeeDatabase = JSON.parse(saved);
-            }
-        }
-
-        // Save employee database to localStorage
-        function saveEmployeeDatabase() {
-            localStorage.setItem('employeeDatabase', JSON.stringify(employeeDatabase));
-        }
-
-        // Setup modal handlers
-        function setupModalHandlers() {
-            const modal = document.getElementById('employeeModal');
-            const addBtn = document.getElementById('addEmployeeBtn');
-            const closeBtn = document.querySelectorAll('.close-modal')[0];
-            const cancelBtn = document.getElementById('cancelEmployeeBtn');
-            const form = document.getElementById('employeeForm');
-            const syncBtn = document.getElementById('syncEmployeesBtn');
-
-            addBtn.addEventListener('click', () => openEmployeeModal());
-            closeBtn.addEventListener('click', () => closeEmployeeModal());
-            cancelBtn.addEventListener('click', () => closeEmployeeModal());
-            form.addEventListener('submit', (e) => {
-                e.preventDefault();
-                saveEmployee();
-            });
-            syncBtn.addEventListener('click', () => syncEmployeesWithAttendance());
-
-            // Close modal when clicking outside
-            window.addEventListener('click', (e) => {
-                if (e.target === modal) {
-                    closeEmployeeModal();
-                }
-            });
-        }
-
-        // Setup Excel handlers
-        function setupExcelHandlers() {
-            const downloadBtn = document.getElementById('downloadTemplateBtn');
-            const excelFile = document.getElementById('excelFile');
-
-            downloadBtn.addEventListener('click', downloadExcelTemplate);
-            excelFile.addEventListener('change', handleExcelImport);
-        }
-
-        // Download Excel Template
-        function downloadExcelTemplate() {
-            // Create template data
-            const shiftOptions = Object.keys(shiftConfig).map(code => shiftConfig[code].name).join(', ');
-            
-            const templateData = [
-                ['Employee Name', 'Designation', 'Posting Office', 'Contact Number', 'Shift'],
-                ['Dr. Nargis Lashari', 'Medical Officer', 'RHC Gambat', '03001234567', 'Morning'],
-                ['Dr. Ali Ahmed', 'Dental Surgeon', 'BHU Sultanabad', '03119876543', 'Morning'],
-                ['Dr. Sara Khan', 'Women Medical Officer', 'RHC Khipro', '03211234567', 'afternoon'],
-                ['NOTE:', 'Fill all columns', 'No empty rows between data', 'Contact must be unique', `Shift: ${shiftOptions}`],
-                ['IMPORTANT:', 'First row is header', 'Start data from row 2', 'Save as Excel file', 'Shift must match exactly']
-            ];
-
-            // Create workbook
-            const wb = XLSX.utils.book_new();
-            const ws = XLSX.utils.aoa_to_sheet(templateData);
-
-            // Set column widths
-            const colWidths = [
-                { wch: 20 }, // Employee Name
-                { wch: 20 }, // Designation
-                { wch: 20 }, // Posting Office
-                { wch: 15 },  // Contact Number
-                { wch: 15 }   // Shift
-            ];
-            ws['!cols'] = colWidths;
-
-            // Add worksheet to workbook
-            XLSX.utils.book_append_sheet(wb, ws, 'Employee Template');
-
-            // Download file
-            XLSX.writeFile(wb, 'Employee_Data_Template.xlsx');
-            showNotification('Excel template downloaded successfully!');
-        }
-
-        // Handle Excel Import
-        function handleExcelImport(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
                 try {
-                    const data = new Uint8Array(e.target.result);
-                    const workbook = XLSX.read(data, { type: 'array' });
+                    employeeDatabase = JSON.parse(saved);
                     
-                    // Get first worksheet
-                    const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-                    const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-
-                    // Process data (skip header row)
-                    const importedEmployees = [];
-                    let successCount = 0;
-                    let errorCount = 0;
-
-                    for (let i = 1; i < jsonData.length; i++) {
-                        const row = jsonData[i];
-                        if (!row || row.length < 5) continue;
-
-                        const name = (row[0] || '').toString().trim();
-                        const designation = (row[1] || '').toString().trim();
-                        const posting = (row[2] || '').toString().trim();
-                        let contact = (row[3] || '').toString().trim();
-                        let shiftInput = (row[4] || 'Morning').toString().trim();
-
-                        // Validate row
-                        if (!name || !designation || !posting || !contact) {
-                            errorCount++;
-                            continue;
+                    // Rebuild identifier set
+                    employeeIdentifiers.clear();
+                    employeeDatabase.forEach(emp => {
+                        if (emp.id) {
+                            employeeIdentifiers.add(emp.id);
                         }
-
-                        // Find shift by name or code
-                        let shift = 'Morning'; // Default
-                        const shiftLower = shiftInput.toLowerCase();
-                        
-                        // Check if input matches any shift code
-                        if (shiftConfig[shiftLower]) {
-                            shift = shiftLower;
-                        } else {
-                            // Check if input matches any shift name
-                            for (const shiftCode in shiftConfig) {
-                                if (shiftConfig[shiftCode].name.toLowerCase() === shiftLower) {
-                                    shift = shiftCode;
-                                    break;
-                                }
-                            }
-                        }
-
-                        // Format contact number (remove spaces, dashes, etc.)
-                        contact = contact.replace(/[\s\-\(\)]/g, '');
-
-                        // Check for duplicate contact
-                        const isDuplicate = employeeDatabase.some(emp => emp.contact === contact) || 
-                                           importedEmployees.some(emp => emp.contact === contact);
-
-                        if (isDuplicate) {
-                            errorCount++;
-                            continue;
-                        }
-
-                        // Add to imported employees
-                        importedEmployees.push({
-                            id: Date.now().toString() + i,
-                            name,
-                            designation,
-                            posting,
-                            contact,
-                            shift
-                        });
-
-                        successCount++;
-                    }
-
-                    // Add imported employees to database
-                    employeeDatabase.push(...importedEmployees);
-                    saveEmployeeDatabase();
-                    renderEmployeeDatabase();
-                    renderEmployeeShiftsTable();
-
-                    // Clear file input
-                    event.target.value = '';
-
-                    // Show results
-                    if (successCount > 0) {
-                        showNotification(`Successfully imported ${successCount} employees! ${errorCount > 0 ? `${errorCount} rows skipped due to errors.` : ''}`);
-                        
-                        // Auto-sync with attendance if data exists
-                        if (Object.keys(perPerson).length > 0) {
-                            updateEmployeeDetailsInDashboard();
-                            applyFilterAndRender();
-                        }
-                    } else {
-                        showNotification('No valid employees found in the Excel file.', 'error');
-                    }
-
+                    });
+                    
+                    console.log(`Loaded ${employeeDatabase.length} employees from database`);
                 } catch (error) {
-                    console.error('Error importing Excel:', error);
-                    showNotification('Error importing Excel file. Please check the format.', 'error');
-                    event.target.value = '';
+                    console.error('Error loading employee database:', error);
+                    employeeDatabase = [];
+                    employeeIdentifiers.clear();
                 }
-            };
-
-            reader.onerror = function() {
-                showNotification('Error reading Excel file.', 'error');
-                event.target.value = '';
-            };
-
-            reader.readAsArrayBuffer(file);
-        }
-
-        // Delete all employees
-        function deleteAllEmployees() {
-            if (confirm('Are you sure you want to delete ALL employees? This action cannot be undone.')) {
+            } else {
                 employeeDatabase = [];
+                employeeIdentifiers.clear();
+            }
+        }
+
+        /**
+         * Save employee database to localStorage
+         */
+        function saveEmployeeDatabase() {
+            try {
+                localStorage.setItem('employeeDatabase', JSON.stringify(employeeDatabase));
+                console.log(`Saved ${employeeDatabase.length} employees to database`);
+                return true;
+            } catch (error) {
+                console.error('Error saving employee database:', error);
+                return false;
+            }
+        }
+
+        /**
+         * Add or update employee with duplicate prevention
+         * SINGLE SOURCE OF TRUTH: Database always wins
+         */
+        function addOrUpdateEmployee(employeeData) {
+            if (!employeeData) return null;
+            
+            // Generate unique ID
+            const uniqueId = generateEmployeeId(employeeData);
+            
+            // Check if employee already exists
+            const existingEmployee = findEmployee(employeeData);
+            
+            if (existingEmployee) {
+                // UPDATE EXISTING RECORD
+                console.log('Updating existing employee:', existingEmployee.name);
+                
+                // Update all fields
+                existingEmployee.name = employeeData.name.trim();
+                existingEmployee.designation = employeeData.designation.trim();
+                existingEmployee.posting = employeeData.posting.trim();
+                existingEmployee.contact = normalizePhone(employeeData.contact);
+                existingEmployee.shift = employeeData.shift || 'Morning';
+                existingEmployee.updatedAt = new Date().toISOString();
+                
+                // Update display ID if not set
+                if (!existingEmployee.displayId) {
+                    existingEmployee.displayId = generateDisplayId(existingEmployee);
+                }
+                
+                // Save changes
                 saveEmployeeDatabase();
-                renderEmployeeDatabase();
-                renderEmployeeShiftsTable();
                 
-                // Update dashboard if data exists
-                if (Object.keys(perPerson).length > 0) {
-                    updateEmployeeDetailsInDashboard();
-                    applyFilterAndRender();
-                }
+                return {
+                    action: 'updated',
+                    employee: existingEmployee
+                };
+            } else {
+                // INSERT NEW RECORD
+                console.log('Adding new employee:', employeeData.name);
                 
-                showNotification('All employees deleted successfully!');
-            }
-        }
-
-        // Open employee modal
-        function openEmployeeModal(employee = null) {
-            const modal = document.getElementById('employeeModal');
-            const title = document.getElementById('employeeModalTitle');
-            const form = document.getElementById('employeeForm');
-            
-            if (employee) {
-                // Edit mode
-                title.textContent = 'Edit Employee';
-                document.getElementById('employeeId').value = employee.id;
-                document.getElementById('empName').value = employee.name;
-                document.getElementById('empDesignation').value = employee.designation;
-                document.getElementById('empPosting').value = employee.posting;
-                document.getElementById('empContact').value = employee.contact;
-                document.getElementById('empShift').value = employee.shift || 'Morning';
-            } else {
-                // Add mode
-                title.textContent = 'Add Employee';
-                form.reset();
-                document.getElementById('employeeId').value = '';
-                document.getElementById('empShift').value = 'Morning';
-            }
-            
-            modal.style.display = 'flex';
-        }
-
-        // Close employee modal
-        function closeEmployeeModal() {
-            const modal = document.getElementById('employeeModal');
-            const form = document.getElementById('employeeForm');
-            
-            modal.style.display = 'none';
-            form.reset();
-            document.getElementById('employeeId').value = '';
-        }
-
-        // Save employee
-        function saveEmployee() {
-            const id = document.getElementById('employeeId').value;
-            const name = document.getElementById('empName').value.trim();
-            const designation = document.getElementById('empDesignation').value.trim();
-            const posting = document.getElementById('empPosting').value.trim();
-            let contact = document.getElementById('empContact').value.trim();
-            const shift = document.getElementById('empShift').value;
-
-            // Format contact number
-            contact = contact.replace(/[\s\-\(\)]/g, '');
-
-            // Validation
-            if (!name || !designation || !posting || !contact) {
-                alert('Please fill all fields');
-                return;
-            }
-
-            // Check for duplicate contact number (edit mode mein current employee ko exclude karein)
-            const isDuplicate = employeeDatabase.some(emp => {
-                if (emp.id === id) return false; // Same employee in edit mode
-                return emp.contact === contact;
-            });
-
-            if (isDuplicate) {
-                alert('Employee with this contact number already exists!');
-                return;
-            }
-
-            let oldContact = '';
-            if (id) {
-                // Find old contact for updating attendance data
-                const oldEmp = employeeDatabase.find(emp => emp.id === id);
-                if (oldEmp) oldContact = oldEmp.contact;
-            }
-
-            if (id) {
-                // Update existing employee
-                const index = employeeDatabase.findIndex(emp => emp.id === id);
-                if (index !== -1) {
-                    employeeDatabase[index] = {
-                        id,
-                        name,
-                        designation,
-                        posting,
-                        contact,
-                        shift
-                    };
-                }
-            } else {
-                // Add new employee
+                // Create new employee object
                 const newEmployee = {
-                    id: Date.now().toString(),
-                    name,
-                    designation,
-                    posting,
-                    contact,
-                    shift
+                    id: uniqueId,
+                    displayId: generateDisplayId(employeeData),
+                    name: employeeData.name.trim(),
+                    designation: employeeData.designation.trim(),
+                    posting: employeeData.posting.trim(),
+                    contact: normalizePhone(employeeData.contact),
+                    shift: employeeData.shift || 'Morning',
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString()
                 };
+                
+                // Add to database
                 employeeDatabase.push(newEmployee);
-            }
-
-            saveEmployeeDatabase();
-            renderEmployeeDatabase();
-            renderEmployeeShiftsTable();
-            closeEmployeeModal();
-            
-            // AUTO SYNC: Update attendance data with new employee details
-            if (Object.keys(perPerson).length > 0) {
-                updateEmployeeDetailsInDashboard();
-                applyFilterAndRender();
-                showNotification(`Employee ${id ? 'updated' : 'added'} and attendance data synced successfully!`);
-            } else {
-                showNotification(`Employee ${id ? 'updated' : 'added'} successfully!`);
-            }
-        }
-
-        // Delete employee with auto sync
-        function deleteEmployee(id) {
-            if (confirm('Are you sure you want to delete this employee?')) {
-                const empToDelete = employeeDatabase.find(emp => emp.id === id);
-                employeeDatabase = employeeDatabase.filter(emp => emp.id !== id);
+                employeeIdentifiers.add(uniqueId);
+                
+                // Save changes
                 saveEmployeeDatabase();
-                renderEmployeeDatabase();
-                renderEmployeeShiftsTable();
                 
-                // AUTO SYNC: Update the dashboard if data exists
-                if (Object.keys(perPerson).length > 0) {
-                    updateEmployeeDetailsInDashboard();
-                    applyFilterAndRender();
-                    showNotification('Employee deleted and attendance data updated!');
-                } else {
-                    showNotification('Employee deleted successfully!');
-                }
-            }
-        }
-
-        // Sync employees with attendance data manually
-        function syncEmployeesWithAttendance() {
-            if (Object.keys(perPerson).length === 0) {
-                alert('No attendance data available. Please process WhatsApp file first.');
-                return;
-            }
-            
-            updateEmployeeDetailsInDashboard();
-            applyFilterAndRender();
-            showNotification('Employee details synced with attendance data!');
-        }
-
-        // Show notification
-        function showNotification(message, type = 'success') {
-            // Create notification element
-            const notification = document.createElement('div');
-            notification.className = `notification ${type === 'error' ? 'error' : ''}`;
-            notification.textContent = message;
-            document.body.appendChild(notification);
-            
-            // Animate in
-            setTimeout(() => {
-                notification.style.transform = 'translateX(0)';
-            }, 100);
-            
-            // Animate out and remove
-            setTimeout(() => {
-                notification.style.transform = 'translateX(100%)';
-                setTimeout(() => {
-                    if (document.body.contains(notification)) {
-                        document.body.removeChild(notification);
-                    }
-                }, 300);
-            }, 4000);
-        }
-
-        // Get shift details
-        function getShiftDetails(shiftName) {
-            return shiftConfig[shiftName] || shiftConfig.Morning;
-        }
-
-        // Convert time string to minutes
-        function timeToMinutes(timeStr) {
-            if (!timeStr) return 0;
-            const [hours, minutes] = timeStr.split(':').map(Number);
-            return hours * 60 + minutes;
-        }
-
-        // Calculate status based on shift
-        function calculateStatus(entry, dayOfWeek, shiftName) {
-            const shift = getShiftDetails(shiftName);
-            
-            if (dayOfWeek === 0) {
-                return 'Holiday (Sun)';
-            } else if (!entry.checkIn) {
-                return 'Absent';
-            } else {
-                const cin = timeStrToMinutes(entry.checkIn);
-                const cout = timeStrToMinutes(entry.checkOut || entry.checkIn);
-                
-                // Convert shift times to minutes
-                const lateAfter = timeToMinutes(shift.lateAfter);
-                let earlyBefore = timeToMinutes(shift.earlyBefore);
-                
-                // Special handling for Friday if enabled
-                if (dayOfWeek === 5 && shift.isFridaySpecial && shift.fridayEarlyBefore) {
-                    earlyBefore = timeToMinutes(shift.fridayEarlyBefore);
-                }
-                
-                if (entry.checkOut && cout < earlyBefore) {
-                    return 'Early';
-                } else if (cin > lateAfter) {
-                    return 'Late';
-                } else {
-                    return 'On Time';
-                }
-            }
-        }
-
-        // Default employee details agar koi match na ho
-        function getDefaultEmployeeDetails(senderKey) {
-            return {
-                name: senderKey,
-                designation: '-',
-                posting: '-',
-                contact: senderKey.replace(/\D/g, '').length >= 7 ? senderKey.replace(/\D/g, '') : '-',
-                shift: 'Morning'
-            };
-        }
-
-        // IMPROVED: Get employee details by name or phone - STRONGER MATCHING ALGORITHM
-        function getEmployeeDetails(senderKey) {
-            if (!senderKey) return getDefaultEmployeeDetails(senderKey);
-            
-            const cleanSender = senderKey.toLowerCase().trim();
-            const senderDigits = cleanSender.replace(/\D/g, '');
-            
-            // 1. First try exact phone number match
-            if (senderDigits.length >= 7) {
-                const byExactPhone = employeeDatabase.find(emp => {
-                    if (!emp.contact) return false;
-                    const empDigits = emp.contact.replace(/\D/g, '');
-                    return empDigits === senderDigits;
-                });
-                if (byExactPhone) return byExactPhone;
-                
-                // 2. Try partial phone match (last 7-10 digits)
-                const byPartialPhone = employeeDatabase.find(emp => {
-                    if (!emp.contact) return false;
-                    const empDigits = emp.contact.replace(/\D/g, '');
-                    
-                    // Match last 7-10 digits
-                    const senderLast7 = senderDigits.slice(-7);
-                    const empLast7 = empDigits.slice(-7);
-                    
-                    if (senderLast7 === empLast7) return true;
-                    
-                    // Also try with last 10 digits
-                    const senderLast10 = senderDigits.slice(-10);
-                    const empLast10 = empDigits.slice(-10);
-                    
-                    return senderLast10 === empLast10;
-                });
-                if (byPartialPhone) return byPartialPhone;
-            }
-            
-            // 3. Try name matching with multiple strategies
-            const byName = employeeDatabase.find(emp => {
-                if (!emp.name) return false;
-                
-                const empName = emp.name.toLowerCase().replace(/dr\.?\s*/g, '').trim();
-                const senderName = cleanSender.replace(/dr\.?\s*/g, '').trim();
-                
-                // Multiple matching strategies
-                const exactMatch = empName === senderName;
-                const containsMatch = senderName.includes(empName) || empName.includes(senderName);
-                const wordMatch = hasCommonWords(empName, senderName);
-                const similarityMatch = getSimilarity(empName, senderName) > 0.7;
-                
-                return exactMatch || containsMatch || wordMatch || similarityMatch;
-            });
-            
-            if (byName) return byName;
-            
-            // 4. Try matching with designation or posting office
-            const byOtherFields = employeeDatabase.find(emp => {
-                const empDesignation = (emp.designation || '').toLowerCase();
-                const empPosting = (emp.posting || '').toLowerCase();
-                const senderName = cleanSender.replace(/dr\.?\s*/g, '').trim();
-                
-                return cleanSender.includes(empDesignation) || 
-                       cleanSender.includes(empPosting) ||
-                       empDesignation.includes(senderName) ||
-                       empPosting.includes(senderName);
-            });
-            
-            if (byOtherFields) return byOtherFields;
-            
-            // 5. Default return agar koi match na mile
-            return getDefaultEmployeeDetails(senderKey);
-        }
-
-        // Check if two strings have common words
-        function hasCommonWords(str1, str2) {
-            const words1 = str1.split(/\s+/).filter(w => w.length > 2);
-            const words2 = str2.split(/\s+/).filter(w => w.length > 2);
-            
-            for (const word1 of words1) {
-                for (const word2 of words2) {
-                    if (word1 === word2 || 
-                        word1.includes(word2) || 
-                        word2.includes(word1) ||
-                        getSimilarity(word1, word2) > 0.8) {
-                        return true;
-                    }
-                }
-            }
-            
-            return false;
-        }
-
-        // Calculate string similarity (for better name matching)
-        function getSimilarity(s1, s2) {
-            const longer = s1.length > s2.length ? s1 : s2;
-            const shorter = s1.length > s2.length ? s2 : s1;
-            
-            if (longer.length === 0) return 1.0;
-            
-            return (longer.length - editDistance(longer, shorter)) / parseFloat(longer.length);
-        }
-
-        function editDistance(s1, s2) {
-            s1 = s1.toLowerCase();
-            s2 = s2.toLowerCase();
-            
-            const costs = [];
-            for (let i = 0; i <= s1.length; i++) {
-                let lastValue = i;
-                for (let j = 0; j <= s2.length; j++) {
-                    if (i === 0) costs[j] = j;
-                    else {
-                        if (j > 0) {
-                            let newValue = costs[j - 1];
-                            if (s1.charAt(i - 1) !== s2.charAt(j - 1))
-                                newValue = Math.min(Math.min(newValue, lastValue), costs[j]) + 1;
-                            costs[j - 1] = lastValue;
-                            lastValue = newValue;
-                        }
-                    }
-                }
-                if (i > 0) costs[s2.length] = lastValue;
-            }
-            return costs[s2.length];
-        }
-
-        // Update employee details in dashboard - IMPROVED VERSION
-        function updateEmployeeDetailsInDashboard() {
-            let updatedCount = 0;
-            
-            for (const p in perPerson) {
-                const empDetails = getEmployeeDetails(p);
-                const oldName = perPerson[p].details.fullName;
-                
-                perPerson[p].details = {
-                    fullName: empDetails.name,
-                    designation: empDetails.designation,
-                    posting: empDetails.posting,
-                    phone: empDetails.contact,
-                    shift: empDetails.shift
+                return {
+                    action: 'added',
+                    employee: newEmployee
                 };
-                
-                // Update shift in all dates
-                for (const date in perPerson[p].dates) {
-                    perPerson[p].dates[date].shift = empDetails.shift;
-                }
-                
-                // Count if name was updated
-                if (oldName !== empDetails.name) {
-                    updatedCount++;
-                }
-            }
-            
-            console.log(`Updated ${updatedCount} employee records in attendance data`);
-            return updatedCount;
-        }
-
-        // FIXED: Calculate top 5 performers with accurate percentage
-        function calculateTopPerformers() {
-            const performers = [];
-            
-            for (const p in filteredPerPerson) {
-                const rec = filteredPerPerson[p];
-                const dates = Object.keys(rec.dates);
-                
-                let onTime = 0;
-                let late = 0;
-                let early = 0;
-                let absent = 0;
-                let sunday = 0;
-                let locationCount = 0;
-                
-                for (const d of dates) {
-                    const e = rec.dates[d];
-                    if (e.status === 'On Time') onTime++;
-                    else if (e.status === 'Late') late++;
-                    else if (e.status === 'Early') early++;
-                    else if (e.status === 'Absent') absent++;
-                    else if (e.status === 'Holiday (Sun)') sunday++;
-                    if (e.location) locationCount++;
-                }
-                
-                // IMPORTANT: Exclude Sundays from working days calculation
-                const totalWorkingDays = dates.length - sunday;
-                
-                // Calculate accuracy: (onTime days / total working days) * 100
-                const accuracy = totalWorkingDays > 0 ? Math.round((onTime / totalWorkingDays) * 100) : 0;
-                
-                // Calculate location score (percentage of days with location shared)
-                const locationScore = totalWorkingDays > 0 ? Math.round((locationCount / totalWorkingDays) * 100) : 0;
-                
-                // Combined score: 70% accuracy + 30% location score
-                const combinedScore = (accuracy * 0.7) + (locationScore * 0.3);
-                
-                performers.push({
-                    name: rec.details.fullName || p,
-                    shift: rec.details.shift || 'Morning',
-                    onTime: onTime,
-                    totalWorkingDays: totalWorkingDays,
-                    totalDays: dates.length,
-                    sunday: sunday,
-                    locationCount: locationCount,
-                    accuracy: accuracy,
-                    locationScore: locationScore,
-                    combinedScore: combinedScore
-                });
-            }
-            
-            // Sort by combined score (descending) and get top 5
-            performers.sort((a, b) => b.combinedScore - a.combinedScore);
-            const topPerformers = performers.slice(0, 5);
-            
-            // Update top performers display
-            const performersList = document.getElementById('performersList');
-            performersList.innerHTML = '';
-            
-            if (topPerformers.length > 0) {
-                topPerformers.forEach((performer, index) => {
-                    const rankColors = ['#ffd700', '#c0c0c0', '#cd7f32', '#4a5568', '#4a5568'];
-                    const shiftClass = `shift-${performer.shift}`;
-                    const shiftText = shiftConfig[performer.shift]?.name || 'Morning Shift';
-                    
-                    performersList.innerHTML += `
-                        <div class="performer-card">
-                            <div class="performer-rank" style="background: ${rankColors[index]}">${index + 1}</div>
-                            <div class="performer-name">${escapeHtml(performer.name)}</div>
-                            <div class="performer-stats">
-                                <span class="${shiftClass}">${shiftText}</span>
-                            </div>
-                            <div class="performer-stats">
-                                On Time: ${performer.onTime} / ${performer.totalWorkingDays} days
-                            </div>
-                            <div class="performer-stats">
-                                Location Shared: ${performer.locationCount} days (${performer.locationScore}%)
-                            </div>
-                            <div class="performer-accuracy">
-                                ${performer.accuracy}% Accuracy
-                            </div>
-                        </div>
-                    `;
-                });
-                document.getElementById('topPerformers').style.display = 'block';
-            } else {
-                document.getElementById('topPerformers').style.display = 'none';
             }
         }
 
-        // Scroll to top button functionality
-        const scrollTopBtn = document.getElementById('scrollTopBtn');
-        window.addEventListener('scroll', function() {
-            if (window.pageYOffset > 300) {
-                scrollTopBtn.classList.add('visible');
-            } else {
-                scrollTopBtn.classList.remove('visible');
+        /**
+         * Delete employee by ID
+         */
+        function deleteEmployeeById(id) {
+            const index = employeeDatabase.findIndex(emp => emp.id === id);
+            if (index !== -1) {
+                const deleted = employeeDatabase.splice(index, 1)[0];
+                employeeIdentifiers.delete(id);
+                saveEmployeeDatabase();
+                return deleted;
             }
-        });
-
-        scrollTopBtn.addEventListener('click', function() {
-            window.scrollTo({
-                top: 0,
-                behavior: 'smooth'
-            });
-        });
-
-        // Chart toggle functionality
-        document.getElementById('toggleStackedChart').addEventListener('click', function() {
-            chartVisibility.stacked = !chartVisibility.stacked;
-            const icon = this.querySelector('i');
-            icon.className = chartVisibility.stacked ? 'fas fa-eye' : 'fas fa-eye-slash';
-            drawCharts();
-        });
-
-        document.getElementById('toggleTrendChart').addEventListener('click', function() {
-            chartVisibility.trend = !chartVisibility.trend;
-            const icon = this.querySelector('i');
-            icon.className = chartVisibility.trend ? 'fas fa-eye' : 'fas fa-eye-slash';
-            drawCharts();
-        });
-
-        // Card click filtering
-        document.querySelectorAll('.card[data-filter]').forEach(card => {
-            card.addEventListener('click', function() {
-                document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
-                this.classList.add('active');
-                activeFilter = this.getAttribute('data-filter');
-                drawCharts();
-            });
-        });
-
-        // Utility functions
-        function normalizeSpaces(s) { 
-            return s ? s.replace(/\u202F|\u00A0/g, ' ').replace(/\s+/g, ' ').trim() : ''; 
-        }
-        
-        function escapeHtml(s) { 
-            if (!s && s !== 0) return ''; 
-            return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); 
+            return null;
         }
 
-        function normalizeSender(raw) {
-            const s = normalizeSpaces(raw || '');
-            const digits = s.replace(/[^\d\+]/g, '');
-            if (/^\+?\d{7,}$/.test(digits)) return digits;
-            if (/^dr[\.\s]/i.test(s)) return s;
-            return s || digits || 'Unknown';
+        /**
+         * Get employee by exact ID
+         */
+        function getEmployeeById(id) {
+            return employeeDatabase.find(emp => emp.id === id) || null;
         }
 
-        // Render Employee Database
-        function renderEmployeeDatabase() {
-            const tbody = document.getElementById('employeeTableBody');
-            tbody.innerHTML = '';
-            
-            if (employeeDatabase.length === 0) {
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="6" class="empty-state">
-                            <i class="fas fa-users"></i>
-                            <p>No employee data available. Add employees to see them here.</p>
-                        </td>
-                    </tr>
-                `;
-                return;
-            }
-            
-            employeeDatabase.forEach(emp => {
-                const shiftClass = `shift-${emp.shift || 'Morning'}`;
-                const shiftName = shiftConfig[emp.shift]?.name || 'Morning Shift';
-                
-                tbody.insertAdjacentHTML('beforeend', `
-                    <tr>
-                        <td>${escapeHtml(emp.name)}</td>
-                        <td>${escapeHtml(emp.designation)}</td>
-                        <td>${escapeHtml(emp.posting)}</td>
-                        <td>${escapeHtml(emp.contact)}</td>
-                        <td><span class="${shiftClass}">${shiftName}</span></td>
-                        <td>
-                            <button class="btn-ghost" onclick="openEmployeeModal(${JSON.stringify(emp).replace(/"/g, '&quot;')})">
-                                <i class="fas fa-edit"></i> Edit
-                            </button>
-                            <button class="btn-ghost" onclick="deleteEmployee('${emp.id}')" style="color: var(--danger);">
-                                <i class="fas fa-trash"></i> Delete
-                            </button>
-                        </td>
-                    </tr>
-                `);
-            });
+        /**
+         * Get employee by phone
+         */
+        function getEmployeeByPhone(phone) {
+            const normalizedPhone = normalizePhone(phone);
+            return employeeDatabase.find(emp => normalizePhone(emp.contact) === normalizedPhone) || null;
         }
 
-        // Time processing functions
+        // ================================================
+        // ENHANCED DATA PROCESSING WITH ACCURACY GUARANTEE
+        // ================================================
+
+        /**
+         * Normalize time for display
+         */
         function normalizeTime(raw) {
             if (!raw) return '';
             
@@ -3362,6 +2408,9 @@
             return raw;
         }
 
+        /**
+         * Time string to minutes conversion
+         */
         function timeStrToMinutes(t) {
             if (!t) return 0;
             
@@ -3382,6 +2431,9 @@
             return hours * 60 + minutes;
         }
 
+        /**
+         * Parse coordinates from URL
+         */
         function parseCoordinatesFromUrl(url) {
             try { url = decodeURIComponent(url); } catch (e) { }
             let m = url.match(/[?&]q=([\-0-9\.]+),([\-0-9\.]+)/);
@@ -3393,6 +2445,9 @@
             return null;
         }
 
+        /**
+         * Check if message contains location
+         */
         function isLocationMessageText(msg) {
             if (!msg) return false;
             const t = msg.toLowerCase();
@@ -3401,48 +2456,107 @@
             return false;
         }
 
-        // Date processing
-        function detectDateOrder(samples) {
-            let dd = 0, mm = 0;
-            for (const s of samples) {
-                const p = s.split(/[\/\-.]/).map(x => x.replace(/\D/g, '')).filter(Boolean);
-                if (p.length >= 3) {
-                    const a = Number(p[0]), b = Number(p[1]);
-                    if (a > 12) dd++;
-                    else if (b > 12) mm++;
+        /**
+         * Extract employee data from message
+         */
+        function extractEmployeeFromMessage(message) {
+            return {
+                name: message.senderRaw,
+                contact: extractPhoneFromSender(message.senderRaw),
+                designation: '-',
+                posting: '-'
+            };
+        }
+
+        /**
+         * Extract phone number from sender string
+         */
+        function extractPhoneFromSender(sender) {
+            if (!sender) return '';
+            
+            // Try to find phone number pattern
+            const phoneMatch = sender.match(/[\d\+][\d\s\-\(\)]{7,}\d/);
+            if (phoneMatch) {
+                return normalizePhone(phoneMatch[0]);
+            }
+            
+            // If no phone found, use sender as-is
+            return sender;
+        }
+
+        /**
+         * Normalize spaces in text
+         */
+        function normalizeSpaces(s) { 
+            return s ? s.replace(/\u202F|\u00A0/g, ' ').replace(/\s+/g, ' ').trim() : ''; 
+        }
+
+        /**
+         * Escape HTML for safe display
+         */
+        function escapeHtml(s) { 
+            if (!s && s !== 0) return ''; 
+            return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); 
+        }
+
+        /**
+         * Normalize sender name
+         */
+        function normalizeSender(raw) {
+            const s = normalizeSpaces(raw || '');
+            const digits = s.replace(/[^\d\+]/g, '');
+            if (/^\+?\d{7,}$/.test(digits)) return digits;
+            if (/^dr[\.\s]/i.test(s)) return s;
+            return s || digits || 'Unknown';
+        }
+
+        /**
+         * Get employee details from database or create default
+         */
+        function getEmployeeDetails(senderKey) {
+            // Try to extract phone from sender key
+            const phone = extractPhoneFromSender(senderKey);
+            
+            // First try by phone
+            if (phone) {
+                const byPhone = getEmployeeByPhone(phone);
+                if (byPhone) return byPhone;
+            }
+            
+            // Try by name matching
+            const name = normalizeName(senderKey);
+            let bestMatch = null;
+            let highestSimilarity = 0;
+            
+            for (const emp of employeeDatabase) {
+                const empName = normalizeName(emp.name);
+                const similarity = calculateSimilarity(name, empName);
+                
+                if (similarity > highestSimilarity && similarity > 0.8) {
+                    highestSimilarity = similarity;
+                    bestMatch = emp;
                 }
             }
-            return (mm > dd) ? 'MMDD' : 'DDMM';
+            
+            if (bestMatch) return bestMatch;
+            
+            // Default return
+            return {
+                name: senderKey,
+                designation: '-',
+                posting: '-',
+                contact: phone || '-',
+                shift: 'Morning'
+            };
         }
 
-        function normalizeDate(raw, order = 'DDMM') {
-            const parts = raw.split(/[\/\-.]/).map(p => p.trim());
-            if (parts.length < 3) return raw;
-            let d, m, y;
-            if (order === 'DDMM') {
-                d = parts[0]; m = parts[1]; y = parts[2];
-            } else {
-                m = parts[0]; d = parts[1]; y = parts[2];
-            }
-            if (y.length === 2) y = '20' + y;
-            if (d.length === 1) d = '0' + d;
-            if (m.length === 1) m = '0' + m;
-            return `${d}/${m}/${y}`;
-        }
+        // ================================================
+        // WHATSAPP FILE PARSING FUNCTIONS
+        // ================================================
 
-        // FIXED: Correct Sunday detection function
-        function getDateDayOfWeek(dateKey) {
-            try {
-                const [dd, mm, yy] = dateKey.split('/').map(Number);
-                const date = new Date(yy, mm - 1, dd);
-                return date.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
-            } catch (e) {
-                console.error('Error getting day of week for:', dateKey, e);
-                return 1; // Default to Monday if error
-            }
-        }
-
-        // FIXED WhatsApp parsing function
+        /**
+         * Parse WhatsApp text file
+         */
         function parseWhatsAppText(text) {
             text = text.replace(/\u202F|\u00A0/g, ' ');
             const lines = text.split(/\r?\n/);
@@ -3519,7 +2633,61 @@
             return msgs;
         }
 
-        // Build per-person records & locations - FIXED SUNDAY DETECTION WITH SHIFTS
+        /**
+         * Detect date order from samples
+         */
+        function detectDateOrder(samples) {
+            let dd = 0, mm = 0;
+            for (const s of samples) {
+                const p = s.split(/[\/\-.]/).map(x => x.replace(/\D/g, '')).filter(Boolean);
+                if (p.length >= 3) {
+                    const a = Number(p[0]), b = Number(p[1]);
+                    if (a > 12) dd++;
+                    else if (b > 12) mm++;
+                }
+            }
+            return (mm > dd) ? 'MMDD' : 'DDMM';
+        }
+
+        /**
+         * Normalize date string
+         */
+        function normalizeDate(raw, order = 'DDMM') {
+            const parts = raw.split(/[\/\-.]/).map(p => p.trim());
+            if (parts.length < 3) return raw;
+            let d, m, y;
+            if (order === 'DDMM') {
+                d = parts[0]; m = parts[1]; y = parts[2];
+            } else {
+                m = parts[0]; d = parts[1]; y = parts[2];
+            }
+            if (y.length === 2) y = '20' + y;
+            if (d.length === 1) d = '0' + d;
+            if (m.length === 1) m = '0' + m;
+            return `${d}/${m}/${y}`;
+        }
+
+        /**
+         * Get day of week from date string
+         */
+        function getDateDayOfWeek(dateKey) {
+            try {
+                const [dd, mm, yy] = dateKey.split('/').map(Number);
+                const date = new Date(yy, mm - 1, dd);
+                return date.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+            } catch (e) {
+                console.error('Error getting day of week for:', dateKey, e);
+                return 1; // Default to Monday if error
+            }
+        }
+
+        // ================================================
+        // ATTENDANCE DATA BUILDING
+        // ================================================
+
+        /**
+         * Build attendance data from messages
+         */
         function buildData(messages) {
             perPerson = {};
             locationItems = [];
@@ -3537,7 +2705,9 @@
                             designation: empDetails.designation,
                             posting: empDetails.posting,
                             phone: empDetails.contact,
-                            shift: empDetails.shift || 'Morning'
+                            shift: empDetails.shift || 'Morning',
+                            databaseId: empDetails.id,
+                            isFromDatabase: !!empDetails.id
                         },
                         dates: {}
                     };
@@ -3630,7 +2800,7 @@
                 const shiftName = perPerson[p].details.shift || 'Morning';
                 for (const d in perPerson[p].dates) {
                     const e = perPerson[p].dates[d];
-                    const dayOfWeek = getDateDayOfWeek(d); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+                    const dayOfWeek = getDateDayOfWeek(d);
                     
                     e.status = calculateStatus(e, dayOfWeek, shiftName);
                 }
@@ -3639,7 +2809,139 @@
             console.log('Built perPerson data with shifts:', perPerson);
         }
 
-        // FIXED: Filtering and rendering with correct Sunday counting and shift filter
+        /**
+         * Calculate status based on shift
+         */
+        function calculateStatus(entry, dayOfWeek, shiftName) {
+            const shift = getShiftDetails(shiftName);
+            
+            if (dayOfWeek === 0) {
+                return 'Holiday (Sun)';
+            } else if (!entry.checkIn) {
+                return 'Absent';
+            } else {
+                const cin = timeStrToMinutes(entry.checkIn);
+                const cout = timeStrToMinutes(entry.checkOut || entry.checkIn);
+                
+                // Convert shift times to minutes
+                const lateAfter = timeToMinutes(shift.lateAfter);
+                let earlyBefore = timeToMinutes(shift.earlyBefore);
+                
+                // Special handling for Friday if enabled
+                if (dayOfWeek === 5 && shift.isFridaySpecial && shift.fridayEarlyBefore) {
+                    earlyBefore = timeToMinutes(shift.fridayEarlyBefore);
+                }
+                
+                if (entry.checkOut && cout < earlyBefore) {
+                    return 'Early';
+                } else if (cin > lateAfter) {
+                    return 'Late';
+                } else {
+                    return 'On Time';
+                }
+            }
+        }
+
+        /**
+         * Get shift details
+         */
+        function getShiftDetails(shiftName) {
+            return shiftConfig[shiftName] || shiftConfig.Morning;
+        }
+
+        /**
+         * Convert time string to minutes
+         */
+        function timeToMinutes(timeStr) {
+            if (!timeStr) return 0;
+            const [hours, minutes] = timeStr.split(':').map(Number);
+            return hours * 60 + minutes;
+        }
+
+        // ================================================
+        // ENHANCED SYNC FUNCTION - SINGLE SOURCE OF TRUTH
+        // ================================================
+
+        /**
+         * Sync attendance data with employee database
+         * Ensures database is the single source of truth
+         */
+        function syncAttendanceWithDatabase() {
+            console.log('Starting database sync...');
+            
+            let updatedCount = 0;
+            let syncedCount = 0;
+            
+            // For each person in attendance data
+            for (const pKey in perPerson) {
+                const person = perPerson[pKey];
+                
+                // Try to find matching employee in database
+                const employeeData = {
+                    name: person.details.fullName,
+                    contact: person.details.phone,
+                    designation: person.details.designation,
+                    posting: person.details.posting,
+                    shift: person.details.shift
+                };
+                
+                const existingEmployee = findEmployee(employeeData);
+                
+                if (existingEmployee) {
+                    // UPDATE ATTENDANCE DATA WITH DATABASE VALUES
+                    person.details.fullName = existingEmployee.name;
+                    person.details.designation = existingEmployee.designation;
+                    person.details.posting = existingEmployee.posting;
+                    person.details.phone = existingEmployee.contact;
+                    person.details.shift = existingEmployee.shift;
+                    person.details.databaseId = existingEmployee.id;
+                    person.details.isFromDatabase = true;
+                    
+                    // Update shift in all dates
+                    for (const date in person.dates) {
+                        person.dates[date].shift = existingEmployee.shift;
+                    }
+                    
+                    syncedCount++;
+                } else {
+                    // Keep as-is, but mark as not from database
+                    person.details.isFromDatabase = false;
+                }
+                
+                updatedCount++;
+            }
+            
+            console.log(`Sync complete: ${syncedCount}/${updatedCount} records synced with database`);
+            return { syncedCount, totalCount: updatedCount };
+        }
+
+        /**
+         * Force sync - updates all attendance records with database values
+         */
+        function forceSyncWithDatabase() {
+            if (employeeDatabase.length === 0) {
+                alert('No employees in database. Please add employees first.');
+                return { syncedCount: 0, totalCount: 0 };
+            }
+            
+            const result = syncAttendanceWithDatabase();
+            
+            // Re-render all data
+            applyFilterAndRender();
+            renderEmployeeDatabase();
+            
+            showNotification(`Successfully synced ${result.syncedCount} attendance records with database.`);
+            
+            return result;
+        }
+
+        // ================================================
+        // FILTERING AND RENDERING
+        // ================================================
+
+        /**
+         * Apply filters and render data
+         */
         function applyFilterAndRender() {
             const start = document.getElementById('startDate').value;
             const end = document.getElementById('endDate').value;
@@ -3685,6 +2987,9 @@
             renderAll();
         }
 
+        /**
+         * Render all data views
+         */
         function renderAll() {
             renderAttendanceTable();
             renderDailySummary();
@@ -3695,6 +3000,9 @@
             calculateTopPerformers();
         }
 
+        /**
+         * Render attendance table
+         */
         function renderAttendanceTable() {
             const tbody = document.querySelector('#attendanceTable tbody');
             tbody.innerHTML = '';
@@ -3708,8 +3016,8 @@
             for (const p of persons) {
                 const rec = filteredPerPerson[p];
                 const dates = Object.keys(rec.dates).sort((a, b) => {
-                    const [da, ma, ya] = a.split('/');
-                    const [db, mb, yb] = b.split('/');
+                    const [da, ma, ya] = a.split('/').map(Number);
+                    const [db, mb, yb] = b.split('/').map(Number);
                     return new Date(ya, ma - 1, da) - new Date(yb, mb - 1, db);
                 });
                 
@@ -3721,7 +3029,7 @@
                     else if (e.status === 'Early') { cls = 'status-early'; }
                     else if (e.status === 'Absent') { cls = 'status-absent'; }
                     else if (e.status.startsWith('Holiday')) { cls = 'status-holiday'; }
-                    else { cls = 'status-absent'; } // Fallback
+                    else { cls = 'status-absent'; }
 
                     const locHtml = e.location ?
                         (e.location.startsWith('http') ?
@@ -3748,7 +3056,9 @@
             }
         }
 
-        // FIXED: Render daily summary with correct Sunday counting and shift
+        /**
+         * Render daily summary
+         */
         function renderDailySummary() {
             const tbody = document.querySelector('#dailySummaryTable tbody');
             tbody.innerHTML = '';
@@ -3858,7 +3168,7 @@
                 const totalPersonWorkingDays = totalPersonDays - sunday;
                 const present = onTime + late + early;
                 
-                // FIXED: Accuracy calculation should exclude Sundays
+                // Accuracy calculation should exclude Sundays
                 const accuracy = totalPersonWorkingDays > 0 ? Math.round((onTime / totalPersonWorkingDays) * 100) : 0;
                 
                 // Shift badge
@@ -3880,6 +3190,9 @@
             }
         }
 
+        /**
+         * Render locations table
+         */
         function renderLocations() {
             const tbody = document.querySelector('#locationsTable tbody');
             tbody.innerHTML = '';
@@ -3927,7 +3240,9 @@
             });
         }
 
-        // Render Performance Report
+        /**
+         * Render performance report
+         */
         function renderPerformanceReport() {
             const persons = Object.keys(filteredPerPerson).sort((a, b) => a.localeCompare(b));
             
@@ -4036,7 +3351,9 @@
             updatePerformanceTab();
         }
 
-        // Update Performance Tab
+        /**
+         * Update performance tab
+         */
         function updatePerformanceTab() {
             const persons = Object.keys(filteredPerPerson).sort((a, b) => a.localeCompare(b));
             const tbody = document.getElementById('performanceTableBody');
@@ -4165,6 +3482,9 @@
             drawPerformanceAnalysisChart(performers);
         }
 
+        /**
+         * Get performance level based on accuracy
+         */
         function getPerformanceLevel(accuracy) {
             if (accuracy >= 90) return 'Excellent';
             if (accuracy >= 70) return 'Good';
@@ -4173,6 +3493,9 @@
             return 'Poor';
         }
 
+        /**
+         * Get performance class for styling
+         */
         function getPerformanceClass(accuracy) {
             if (accuracy >= 90) return 'percent-positive';
             if (accuracy >= 70) return 'percent-positive';
@@ -4181,97 +3504,112 @@
             return 'percent-negative';
         }
 
-        function drawPerformanceAnalysisChart(performers) {
-            if (performanceAnalysisChart) {
-                performanceAnalysisChart.destroy();
-            }
-            
-            const ctx = document.getElementById('performanceAnalysisChart').getContext('2d');
-            const labels = performers.slice(0, 10).map(p => p.name.substring(0, 15) + (p.name.length > 15 ? '...' : ''));
-            const accuracyData = performers.slice(0, 10).map(p => p.accuracy);
-            const onTimeData = performers.slice(0, 10).map(p => p.onTime);
-            
-            performanceAnalysisChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [
-                        {
-                            label: 'Accuracy %',
-                            data: accuracyData,
-                            backgroundColor: 'rgba(22, 163, 74, 0.7)',
-                            borderColor: 'rgba(22, 163, 74, 1)',
-                            borderWidth: 1,
-                            yAxisID: 'y'
-                        },
-                        {
-                            label: 'On Time Days',
-                            data: onTimeData,
-                            backgroundColor: 'rgba(59, 130, 246, 0.7)',
-                            borderColor: 'rgba(59, 130, 246, 1)',
-                            borderWidth: 1,
-                            yAxisID: 'y1',
-                            type: 'line',
-                            fill: false,
-                            tension: 0.3
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        title: {
-                            display: true,
-                            text: 'Top 10 Performers - Accuracy vs On Time Days',
-                            font: {
-                                size: 16
-                            }
-                        },
-                        legend: {
-                            position: 'bottom'
-                        }
-                    },
-                    scales: {
-                        x: {
-                            ticks: {
-                                maxRotation: 45,
-                                minRotation: 45
-                            }
-                        },
-                        y: {
-                            type: 'linear',
-                            display: true,
-                            position: 'left',
-                            title: {
-                                display: true,
-                                text: 'Accuracy %'
-                            },
-                            min: 0,
-                            max: 100
-                        },
-                        y1: {
-                            type: 'linear',
-                            display: true,
-                            position: 'right',
-                            title: {
-                                display: true,
-                                text: 'On Time Days'
-                            },
-                            min: 0,
-                            grid: {
-                                drawOnChartArea: false
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
+        /**
+         * Update card values
+         */
         function updateCards() {
             document.getElementById('totalPeople').innerText = Object.keys(filteredPerPerson).length;
         }
 
+        /**
+         * Calculate top performers
+         */
+        function calculateTopPerformers() {
+            const performers = [];
+            
+            for (const p in filteredPerPerson) {
+                const rec = filteredPerPerson[p];
+                const dates = Object.keys(rec.dates);
+                
+                let onTime = 0;
+                let late = 0;
+                let early = 0;
+                let absent = 0;
+                let sunday = 0;
+                let locationCount = 0;
+                
+                for (const d of dates) {
+                    const e = rec.dates[d];
+                    if (e.status === 'On Time') onTime++;
+                    else if (e.status === 'Late') late++;
+                    else if (e.status === 'Early') early++;
+                    else if (e.status === 'Absent') absent++;
+                    else if (e.status === 'Holiday (Sun)') sunday++;
+                    if (e.location) locationCount++;
+                }
+                
+                // Exclude Sundays from working days calculation
+                const totalWorkingDays = dates.length - sunday;
+                
+                // Calculate accuracy: (onTime days / total working days) * 100
+                const accuracy = totalWorkingDays > 0 ? Math.round((onTime / totalWorkingDays) * 100) : 0;
+                
+                // Calculate location score (percentage of days with location shared)
+                const locationScore = totalWorkingDays > 0 ? Math.round((locationCount / totalWorkingDays) * 100) : 0;
+                
+                // Combined score: 70% accuracy + 30% location score
+                const combinedScore = (accuracy * 0.7) + (locationScore * 0.3);
+                
+                performers.push({
+                    name: rec.details.fullName || p,
+                    shift: rec.details.shift || 'Morning',
+                    onTime: onTime,
+                    totalWorkingDays: totalWorkingDays,
+                    totalDays: dates.length,
+                    sunday: sunday,
+                    locationCount: locationCount,
+                    accuracy: accuracy,
+                    locationScore: locationScore,
+                    combinedScore: combinedScore
+                });
+            }
+            
+            // Sort by combined score (descending) and get top 5
+            performers.sort((a, b) => b.combinedScore - a.combinedScore);
+            const topPerformers = performers.slice(0, 5);
+            
+            // Update top performers display
+            const performersList = document.getElementById('performersList');
+            performersList.innerHTML = '';
+            
+            if (topPerformers.length > 0) {
+                topPerformers.forEach((performer, index) => {
+                    const rankColors = ['#ffd700', '#c0c0c0', '#cd7f32', '#4a5568', '#4a5568'];
+                    const shiftClass = `shift-${performer.shift}`;
+                    const shiftText = shiftConfig[performer.shift]?.name || 'Morning Shift';
+                    
+                    performersList.innerHTML += `
+                        <div class="performer-card">
+                            <div class="performer-rank" style="background: ${rankColors[index]}">${index + 1}</div>
+                            <div class="performer-name">${escapeHtml(performer.name)}</div>
+                            <div class="performer-stats">
+                                <span class="${shiftClass}">${shiftText}</span>
+                            </div>
+                            <div class="performer-stats">
+                                On Time: ${performer.onTime} / ${performer.totalWorkingDays} days
+                            </div>
+                            <div class="performer-stats">
+                                Location Shared: ${performer.locationCount} days (${performer.locationScore}%)
+                            </div>
+                            <div class="performer-accuracy">
+                                ${performer.accuracy}% Accuracy
+                            </div>
+                        </div>
+                    `;
+                });
+                document.getElementById('topPerformers').style.display = 'block';
+            } else {
+                document.getElementById('topPerformers').style.display = 'none';
+            }
+        }
+
+        // ================================================
+        // CHART FUNCTIONS
+        // ================================================
+
+        /**
+         * Draw all charts
+         */
         function drawCharts() {
             // Get all dates from filtered data
             const allDates = new Set();
@@ -4440,6 +3778,9 @@
             drawPerformanceTrendChart();
         }
 
+        /**
+         * Draw performance trend chart
+         */
         function drawPerformanceTrendChart() {
             if (performanceTrendChart) {
                 performanceTrendChart.destroy();
@@ -4576,7 +3917,1119 @@
             });
         }
 
-        // Excel export
+        /**
+         * Draw performance analysis chart
+         */
+        function drawPerformanceAnalysisChart(performers) {
+            if (performanceAnalysisChart) {
+                performanceAnalysisChart.destroy();
+            }
+            
+            const ctx = document.getElementById('performanceAnalysisChart').getContext('2d');
+            const labels = performers.slice(0, 10).map(p => p.name.substring(0, 15) + (p.name.length > 15 ? '...' : ''));
+            const accuracyData = performers.slice(0, 10).map(p => p.accuracy);
+            const onTimeData = performers.slice(0, 10).map(p => p.onTime);
+            
+            performanceAnalysisChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Accuracy %',
+                            data: accuracyData,
+                            backgroundColor: 'rgba(22, 163, 74, 0.7)',
+                            borderColor: 'rgba(22, 163, 74, 1)',
+                            borderWidth: 1,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'On Time Days',
+                            data: onTimeData,
+                            backgroundColor: 'rgba(59, 130, 246, 0.7)',
+                            borderColor: 'rgba(59, 130, 246, 1)',
+                            borderWidth: 1,
+                            yAxisID: 'y1',
+                            type: 'line',
+                            fill: false,
+                            tension: 0.3
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Top 10 Performers - Accuracy vs On Time Days',
+                            font: {
+                                size: 16
+                            }
+                        },
+                        legend: {
+                            position: 'bottom'
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: {
+                                maxRotation: 45,
+                                minRotation: 45
+                            }
+                        },
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: {
+                                display: true,
+                                text: 'Accuracy %'
+                            },
+                            min: 0,
+                            max: 100
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            title: {
+                                display: true,
+                                text: 'On Time Days'
+                            },
+                            min: 0,
+                            grid: {
+                                drawOnChartArea: false
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // ================================================
+        // SHIFT MANAGEMENT FUNCTIONS
+        // ================================================
+
+        /**
+         * Load shift configuration from localStorage
+         */
+        function loadShiftConfig() {
+            const saved = localStorage.getItem('shiftConfig');
+            if (saved) {
+                shiftConfig = JSON.parse(saved);
+            }
+        }
+
+        /**
+         * Save shift configuration to localStorage
+         */
+        function saveShiftConfig() {
+            localStorage.setItem('shiftConfig', JSON.stringify(shiftConfig));
+        }
+
+        /**
+         * Format time for display (24h to 12h)
+         */
+        function formatTimeForDisplay(time24) {
+            if (!time24) return '';
+            
+            const [hours, minutes] = time24.split(':').map(Number);
+            const period = hours >= 12 ? 'PM' : 'AM';
+            const hours12 = hours % 12 || 12;
+            
+            return `${hours12}:${minutes.toString().padStart(2, '0')} ${period}`;
+        }
+
+        /**
+         * Render shift cards
+         */
+        function renderShiftCards() {
+            const shiftCards = document.getElementById('shiftCards');
+            const shiftCardsTab = document.getElementById('shiftCardsTab');
+            const activeShiftRules = document.getElementById('activeShiftRules');
+            
+            if (!shiftCards || !shiftCardsTab || !activeShiftRules) return;
+            
+            shiftCards.innerHTML = '';
+            shiftCardsTab.innerHTML = '';
+            activeShiftRules.innerHTML = '';
+            
+            Object.keys(shiftConfig).forEach(shiftCode => {
+                const shift = shiftConfig[shiftCode];
+                
+                // Determine CSS class based on shift code
+                let shiftClass = 'shift-custom';
+                if (shiftCode === 'Morning') shiftClass = 'shift-Morning';
+                else if (shiftCode === 'afternoon') shiftClass = 'shift-afternoon';
+                else if (shiftCode === 'night') shiftClass = 'shift-night';
+                
+                // Shift card for main display
+                shiftCards.innerHTML += `
+                    <div class="shift-card" style="border-left-color: ${shift.color}">
+                        <div class="shift-card-title">
+                            <span>${shift.name}</span>
+                            <span class="${shiftClass}">${shift.code}</span>
+                        </div>
+                        <div class="shift-card-times">
+                            <div class="shift-time-item">
+                                <div class="shift-time-label">Start Time</div>
+                                <div class="shift-time-value">${formatTimeForDisplay(shift.start)}</div>
+                            </div>
+                            <div class="shift-time-item">
+                                <div class="shift-time-label">End Time</div>
+                                <div class="shift-time-value">${formatTimeForDisplay(shift.end)}</div>
+                            </div>
+                            <div class="shift-time-item">
+                                <div class="shift-time-label">Late After</div>
+                                <div class="shift-time-value">${formatTimeForDisplay(shift.lateAfter)}</div>
+                            </div>
+                            <div class="shift-time-item">
+                                <div class="shift-time-label">Early Before</div>
+                                <div class="shift-time-value">${formatTimeForDisplay(shift.earlyBefore)}</div>
+                            </div>
+                        </div>
+                        ${shift.isFridaySpecial ? `
+                            <div style="margin-top: 10px; padding: 5px; background: #fff3cd; border-radius: 4px; font-size: 12px;">
+                                <i class="fas fa-star"></i> Friday Early: ${formatTimeForDisplay(shift.fridayEarlyBefore)}
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+                
+                // Shift card for shift management tab (with edit/delete buttons)
+                shiftCardsTab.innerHTML += `
+                    <div class="shift-card" style="border-left-color: ${shift.color}">
+                        <div class="shift-card-title">
+                            <span>${shift.name}</span>
+                            <span class="${shiftClass}">${shift.code}</span>
+                        </div>
+                        <div class="shift-card-times">
+                            <div class="shift-time-item">
+                                <div class="shift-time-label">Start Time</div>
+                                <div class="shift-time-value">${formatTimeForDisplay(shift.start)}</div>
+                            </div>
+                            <div class="shift-time-item">
+                                <div class="shift-time-label">End Time</div>
+                                <div class="shift-time-value">${formatTimeForDisplay(shift.end)}</div>
+                            </div>
+                            <div class="shift-time-item">
+                                <div class="shift-time-label">Late After</div>
+                                <div class="shift-time-value">${formatTimeForDisplay(shift.lateAfter)}</div>
+                            </div>
+                            <div class="shift-time-item">
+                                <div class="shift-time-label">Early Before</div>
+                                <div class="shift-time-value">${formatTimeForDisplay(shift.earlyBefore)}</div>
+                            </div>
+                        </div>
+                        ${shift.isFridaySpecial ? `
+                            <div style="margin-top: 10px; padding: 5px; background: #fff3cd; border-radius: 4px; font-size: 12px;">
+                                <i class="fas fa-star"></i> Friday Early: ${formatTimeForDisplay(shift.fridayEarlyBefore)}
+                            </div>
+                        ` : ''}
+                        <div class="shift-actions">
+                            <button class="btn-ghost" onclick="openShiftModal('${shiftCode}')">
+                                <i class="fas fa-edit"></i> Edit
+                            </button>
+                            <button class="btn-ghost" onclick="deleteShift('${shiftCode}')" style="color: var(--danger);">
+                                <i class="fas fa-trash"></i> Delete
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                // Active shift rules
+                activeShiftRules.innerHTML += `
+                    <div class="shift-rule-item">
+                        <div class="shift-name">${shift.name}</div>
+                        <div class="shift-time">${formatTimeForDisplay(shift.start)} - ${formatTimeForDisplay(shift.end)}</div>
+                        <div style="font-size: 12px; color: #666;">
+                            Late after ${formatTimeForDisplay(shift.lateAfter)}
+                            ${shift.isFridaySpecial ? ` | Friday: ${formatTimeForDisplay(shift.fridayEarlyBefore)}` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            // Render employee shifts table in shifts tab
+            renderEmployeeShiftsTable();
+        }
+
+        /**
+         * Update shift filter dropdown
+         */
+        function updateShiftFilter() {
+            const shiftFilter = document.getElementById('shiftFilter');
+            shiftFilter.innerHTML = '<option value="">All Shifts</option>';
+            
+            Object.keys(shiftConfig).forEach(shiftCode => {
+                const shift = shiftConfig[shiftCode];
+                shiftFilter.innerHTML += `<option value="${shiftCode}">${shift.name}</option>`;
+            });
+        }
+
+        /**
+         * Update employee shift dropdown
+         */
+        function updateEmployeeShiftDropdown() {
+            const empShift = document.getElementById('empShift');
+            empShift.innerHTML = '';
+            
+            Object.keys(shiftConfig).forEach(shiftCode => {
+                const shift = shiftConfig[shiftCode];
+                empShift.innerHTML += `<option value="${shiftCode}">${shift.name}</option>`;
+            });
+        }
+
+        /**
+         * Render employee shifts table
+         */
+        function renderEmployeeShiftsTable() {
+            const employeeShiftsBody = document.getElementById('employeeShiftsBody');
+            if (!employeeShiftsBody) return;
+            
+            employeeShiftsBody.innerHTML = '';
+            
+            if (employeeDatabase.length === 0) {
+                employeeShiftsBody.innerHTML = `
+                    <tr>
+                        <td colspan="4" class="empty-state">
+                            <i class="fas fa-users"></i>
+                            <p>No employee data available. Add employees first.</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            employeeDatabase.forEach(emp => {
+                const shiftOptions = Object.keys(shiftConfig).map(shiftCode => {
+                    const shift = shiftConfig[shiftCode];
+                    const selected = emp.shift === shiftCode ? 'selected' : '';
+                    return `<option value="${shiftCode}" ${selected}>${shift.name}</option>`;
+                }).join('');
+                
+                employeeShiftsBody.innerHTML += `
+                    <tr>
+                        <td>${escapeHtml(emp.name)}</td>
+                        <td><span class="shift-${emp.shift || 'Morning'}">${shiftConfig[emp.shift]?.name || 'Morning Shift'}</span></td>
+                        <td>
+                            <select class="employee-shift-select" data-employee-id="${emp.id}" style="width: 100%; padding: 5px;">
+                                ${shiftOptions}
+                            </select>
+                        </td>
+                        <td>
+                            <button class="btn-ghost" onclick="updateEmployeeShift('${emp.id}')">
+                                <i class="fas fa-save"></i> Update
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            // Add event listeners to shift select elements
+            document.querySelectorAll('.employee-shift-select').forEach(select => {
+                select.addEventListener('change', function() {
+                    const employeeId = this.getAttribute('data-employee-id');
+                    updateEmployeeShift(employeeId);
+                });
+            });
+        }
+
+        /**
+         * Update employee shift
+         */
+        function updateEmployeeShift(employeeId) {
+            const select = document.querySelector(`.employee-shift-select[data-employee-id="${employeeId}"]`);
+            const newShift = select.value;
+            
+            const index = employeeDatabase.findIndex(emp => emp.id === employeeId);
+            if (index !== -1) {
+                employeeDatabase[index].shift = newShift;
+                saveEmployeeDatabase();
+                renderEmployeeDatabase();
+                renderEmployeeShiftsTable();
+                
+                // Update attendance data if exists
+                if (Object.keys(perPerson).length > 0) {
+                    updateShiftDetailsInDashboard();
+                    applyFilterAndRender();
+                }
+                
+                showNotification('Employee shift updated successfully!');
+            }
+        }
+
+        /**
+         * Update shift details in dashboard
+         */
+        function updateShiftDetailsInDashboard() {
+            for (const p in perPerson) {
+                const empDetails = getEmployeeDetails(p);
+                perPerson[p].details.shift = empDetails.shift || 'Morning';
+                
+                // Update shift in all dates
+                for (const date in perPerson[p].dates) {
+                    perPerson[p].dates[date].shift = empDetails.shift || 'Morning';
+                }
+            }
+        }
+
+        // ================================================
+        // EMPLOYEE DATABASE UI FUNCTIONS
+        // ================================================
+
+        /**
+         * Render employee database table with sync status
+         */
+        function renderEmployeeDatabase() {
+            const tbody = document.getElementById('employeeTableBody');
+            if (!tbody) return;
+            
+            tbody.innerHTML = '';
+            
+            if (employeeDatabase.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="empty-state">
+                            <i class="fas fa-users"></i>
+                            <p>No employee data available. Add employees to see them here.</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            // Sort by name
+            const sortedEmployees = [...employeeDatabase].sort((a, b) => 
+                normalizeName(a.name).localeCompare(normalizeName(b.name))
+            );
+            
+            sortedEmployees.forEach(emp => {
+                const shiftClass = `shift-${emp.shift || 'Morning'}`;
+                const shiftName = shiftConfig[emp.shift]?.name || 'Morning Shift';
+                
+                // Check if employee is in attendance data
+                const inAttendance = isEmployeeInAttendance(emp);
+                const syncStatus = inAttendance ? 
+                    '<span class="status-on" style="font-size: 11px;">Synced</span>' : 
+                    '<span class="status-absent" style="font-size: 11px;">Not in Data</span>';
+                
+                tbody.insertAdjacentHTML('beforeend', `
+                    <tr>
+                        <td>${escapeHtml(emp.name)}</td>
+                        <td>${escapeHtml(emp.designation)}</td>
+                        <td>${escapeHtml(emp.posting)}</td>
+                        <td>${escapeHtml(formatPhoneForDisplay(emp.contact))}</td>
+                        <td><span class="${shiftClass}">${shiftName}</span></td>
+                        <td>${syncStatus}</td>
+                        <td>
+                            <button class="btn-ghost" onclick="editEmployeeInModal('${emp.id}')">
+                                <i class="fas fa-edit"></i> Edit
+                            </button>
+                            <button class="btn-ghost" onclick="deleteEmployeeWithConfirmation('${emp.id}')" style="color: var(--danger);">
+                                <i class="fas fa-trash"></i> Delete
+                            </button>
+                        </td>
+                    </tr>
+                `);
+            });
+        }
+
+        /**
+         * Check if employee is present in attendance data
+         */
+        function isEmployeeInAttendance(employee) {
+            for (const pKey in perPerson) {
+                const person = perPerson[pKey];
+                const personPhone = normalizePhone(person.details.phone);
+                const employeePhone = normalizePhone(employee.contact);
+                
+                if (personPhone === employeePhone) {
+                    return true;
+                }
+                
+                // Also check name similarity
+                const personName = normalizeName(person.details.fullName);
+                const employeeName = normalizeName(employee.name);
+                if (calculateSimilarity(personName, employeeName) > 0.85) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        /**
+         * Format phone for display
+         */
+        function formatPhoneForDisplay(phone) {
+            if (!phone) return '-';
+            
+            const normalized = normalizePhone(phone);
+            
+            // Format: +92 XXX XXXXXXX
+            if (normalized.startsWith('92') && normalized.length === 12) {
+                return `+${normalized.substring(0, 3)} ${normalized.substring(3, 6)} ${normalized.substring(6)}`;
+            }
+            
+            // Return as-is for other formats
+            return phone;
+        }
+
+        /**
+         * Open employee modal for editing
+         */
+        function editEmployeeInModal(employeeId) {
+            const employee = getEmployeeById(employeeId);
+            if (!employee) {
+                alert('Employee not found!');
+                return;
+            }
+            
+            openEmployeeModal(employee);
+        }
+
+        /**
+         * Delete employee with confirmation and sync
+         */
+        function deleteEmployeeWithConfirmation(employeeId) {
+            const employee = getEmployeeById(employeeId);
+            if (!employee) return;
+            
+            if (confirm(`Are you sure you want to delete employee "${employee.name}"? This will also remove them from attendance records.`)) {
+                const deleted = deleteEmployeeById(employeeId);
+                if (deleted) {
+                    renderEmployeeDatabase();
+                    
+                    // Remove from attendance data if exists
+                    removeEmployeeFromAttendance(employee);
+                    
+                    // Re-render attendance data
+                    applyFilterAndRender();
+                    
+                    showNotification(`Employee "${deleted.name}" deleted successfully.`);
+                }
+            }
+        }
+
+        /**
+         * Remove employee from attendance data
+         */
+        function removeEmployeeFromAttendance(employee) {
+            const employeePhone = normalizePhone(employee.contact);
+            let removed = false;
+            
+            for (const pKey in perPerson) {
+                const person = perPerson[pKey];
+                const personPhone = normalizePhone(person.details.phone);
+                
+                if (personPhone === employeePhone) {
+                    delete perPerson[pKey];
+                    removed = true;
+                    break;
+                }
+            }
+            
+            return removed;
+        }
+
+        // ================================================
+        // MODAL AND FORM HANDLERS
+        // ================================================
+
+        /**
+         * Setup modal handlers
+         */
+        function setupModalHandlers() {
+            const modal = document.getElementById('employeeModal');
+            const addBtn = document.getElementById('addEmployeeBtn');
+            const closeBtn = document.querySelectorAll('.close-modal')[0];
+            const cancelBtn = document.getElementById('cancelEmployeeBtn');
+            const form = document.getElementById('employeeForm');
+            const syncBtn = document.getElementById('syncEmployeesBtn');
+
+            addBtn.addEventListener('click', () => openEmployeeModal());
+            closeBtn.addEventListener('click', () => closeEmployeeModal());
+            cancelBtn.addEventListener('click', () => closeEmployeeModal());
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                saveEmployee();
+            });
+            syncBtn.addEventListener('click', () => forceSyncWithDatabase());
+
+            // Close modal when clicking outside
+            window.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    closeEmployeeModal();
+                }
+            });
+        }
+
+        /**
+         * Open employee modal
+         */
+        function openEmployeeModal(employee = null) {
+            const modal = document.getElementById('employeeModal');
+            const title = document.getElementById('employeeModalTitle');
+            const form = document.getElementById('employeeForm');
+            
+            if (employee) {
+                // Edit mode
+                title.textContent = 'Edit Employee';
+                document.getElementById('employeeId').value = employee.id;
+                document.getElementById('empName').value = employee.name;
+                document.getElementById('empDesignation').value = employee.designation;
+                document.getElementById('empPosting').value = employee.posting;
+                document.getElementById('empContact').value = formatPhoneForDisplay(employee.contact);
+                document.getElementById('empShift').value = employee.shift || 'Morning';
+            } else {
+                // Add mode
+                title.textContent = 'Add Employee';
+                form.reset();
+                document.getElementById('employeeId').value = '';
+                document.getElementById('empShift').value = 'Morning';
+            }
+            
+            modal.style.display = 'flex';
+        }
+
+        /**
+         * Close employee modal
+         */
+        function closeEmployeeModal() {
+            const modal = document.getElementById('employeeModal');
+            const form = document.getElementById('employeeForm');
+            
+            modal.style.display = 'none';
+            form.reset();
+            document.getElementById('employeeId').value = '';
+        }
+
+        /**
+         * Save employee with enhanced validation
+         */
+        function saveEmployee() {
+            const id = document.getElementById('employeeId').value;
+            const name = document.getElementById('empName').value.trim();
+            const designation = document.getElementById('empDesignation').value.trim();
+            const posting = document.getElementById('empPosting').value.trim();
+            let contact = document.getElementById('empContact').value.trim();
+            const shift = document.getElementById('empShift').value;
+
+            // Normalize contact
+            contact = normalizePhone(contact);
+
+            // Validation
+            if (!name) {
+                alert('Employee name is required');
+                return;
+            }
+            
+            if (!designation) {
+                alert('Designation is required');
+                return;
+            }
+            
+            if (!posting) {
+                alert('Posting office is required');
+                return;
+            }
+            
+            if (!contact || contact.length < 7) {
+                alert('Valid contact number is required (minimum 7 digits)');
+                return;
+            }
+
+            // Prepare employee data
+            const employeeData = {
+                id,
+                name,
+                designation,
+                posting,
+                contact,
+                shift
+            };
+
+            // Add or update employee
+            const result = addOrUpdateEmployee(employeeData);
+            
+            // Update UI
+            renderEmployeeDatabase();
+            renderEmployeeShiftsTable();
+            closeEmployeeModal();
+            
+            // Auto-sync with attendance data
+            if (Object.keys(perPerson).length > 0) {
+                forceSyncWithDatabase();
+                showNotification(`Employee ${result.action} successfully and attendance data synced!`);
+            } else {
+                showNotification(`Employee ${result.action} successfully!`);
+            }
+        }
+
+        /**
+         * Setup shift handlers
+         */
+        function setupShiftHandlers() {
+            const configureShiftsBtn = document.getElementById('configureShiftsBtn');
+            const addShiftBtn = document.getElementById('addShiftBtn');
+            const resetShiftsBtn = document.getElementById('resetShiftsBtn');
+            const shiftModal = document.getElementById('shiftModal');
+            const closeShiftModal = shiftModal.querySelector('.close-modal');
+            const cancelShiftBtn = document.getElementById('cancelShiftBtn');
+            const shiftForm = document.getElementById('shiftForm');
+            const isFridaySpecial = document.getElementById('isFridaySpecial');
+
+            configureShiftsBtn.addEventListener('click', () => {
+                // Switch to shifts tab
+                document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+                document.querySelector('[data-tab="shiftsTab"]').classList.add('active');
+                document.querySelectorAll('.tab-pane').forEach(p => p.style.display = 'none');
+                document.getElementById('shiftsTab').style.display = 'block';
+            });
+
+            addShiftBtn.addEventListener('click', () => openShiftModal());
+            resetShiftsBtn.addEventListener('click', resetShiftsToDefault);
+
+            closeShiftModal.addEventListener('click', () => closeShiftModal());
+            cancelShiftBtn.addEventListener('click', () => closeShiftModal());
+
+            shiftForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                saveShift();
+            });
+
+            isFridaySpecial.addEventListener('change', function() {
+                document.getElementById('fridayTimeContainer').style.display = 
+                    this.checked ? 'block' : 'none';
+            });
+
+            // Close modal when clicking outside
+            window.addEventListener('click', (e) => {
+                if (e.target === shiftModal) {
+                    closeShiftModal();
+                }
+            });
+        }
+
+        /**
+         * Open shift modal
+         */
+        function openShiftModal(shiftCode = null) {
+            const modal = document.getElementById('shiftModal');
+            const title = document.getElementById('shiftModalTitle');
+            const form = document.getElementById('shiftForm');
+            
+            if (shiftCode && shiftConfig[shiftCode]) {
+                // Edit mode
+                const shift = shiftConfig[shiftCode];
+                title.textContent = 'Edit Shift';
+                document.getElementById('shiftId').value = shiftCode;
+                document.getElementById('shiftIndex').value = shiftCode;
+                document.getElementById('shiftName').value = shift.name;
+                document.getElementById('shiftCode').value = shift.code;
+                document.getElementById('startTime').value = shift.start;
+                document.getElementById('endTime').value = shift.end;
+                document.getElementById('lateAfter').value = shift.lateAfter;
+                document.getElementById('earlyBefore').value = shift.earlyBefore;
+                document.getElementById('shiftColor').value = shift.color;
+                document.getElementById('isFridaySpecial').checked = shift.isFridaySpecial;
+                document.getElementById('fridayEarlyBefore').value = shift.fridayEarlyBefore || '';
+                document.getElementById('fridayTimeContainer').style.display = 
+                    shift.isFridaySpecial ? 'block' : 'none';
+            } else {
+                // Add mode
+                title.textContent = 'Add Shift';
+                form.reset();
+                document.getElementById('shiftId').value = '';
+                document.getElementById('shiftIndex').value = '';
+                document.getElementById('shiftColor').value = '#1565c0';
+                document.getElementById('isFridaySpecial').checked = false;
+                document.getElementById('fridayTimeContainer').style.display = 'none';
+            }
+            
+            modal.style.display = 'flex';
+        }
+
+        /**
+         * Close shift modal
+         */
+        function closeShiftModal() {
+            const modal = document.getElementById('shiftModal');
+            const form = document.getElementById('shiftForm');
+            
+            modal.style.display = 'none';
+            form.reset();
+            document.getElementById('shiftId').value = '';
+            document.getElementById('fridayTimeContainer').style.display = 'none';
+        }
+
+        /**
+         * Save shift
+         */
+        function saveShift() {
+            const shiftId = document.getElementById('shiftId').value;
+            const shiftIndex = document.getElementById('shiftIndex').value;
+            const name = document.getElementById('shiftName').value.trim();
+            const code = document.getElementById('shiftCode').value.trim().toLowerCase();
+            const start = document.getElementById('startTime').value;
+            const end = document.getElementById('endTime').value;
+            const lateAfter = document.getElementById('lateAfter').value;
+            const earlyBefore = document.getElementById('earlyBefore').value;
+            const color = document.getElementById('shiftColor').value;
+            const isFridaySpecial = document.getElementById('isFridaySpecial').checked;
+            const fridayEarlyBefore = document.getElementById('fridayEarlyBefore').value;
+
+            // Validation
+            if (!name || !code || !start || !end || !lateAfter || !earlyBefore) {
+                alert('Please fill all required fields');
+                return;
+            }
+
+            // Check for duplicate code
+            if (!shiftId && shiftConfig[code]) {
+                alert('Shift with this code already exists!');
+                return;
+            }
+
+            // Check if code changed in edit mode
+            if (shiftId && shiftId !== code && shiftConfig[code]) {
+                alert('Shift with this code already exists!');
+                return;
+            }
+
+            const newShift = {
+                name,
+                code,
+                start,
+                end,
+                lateAfter,
+                earlyBefore,
+                fridayEarlyBefore: isFridaySpecial ? fridayEarlyBefore : '',
+                isFridaySpecial,
+                color
+            };
+
+            if (shiftId) {
+                // Update existing shift
+                if (shiftId !== code) {
+                    delete shiftConfig[shiftId];
+                }
+                shiftConfig[code] = newShift;
+            } else {
+                // Add new shift
+                shiftConfig[code] = newShift;
+            }
+
+            saveShiftConfig();
+            renderShiftCards();
+            updateShiftFilter();
+            updateEmployeeShiftDropdown();
+            closeShiftModal();
+            
+            // Update attendance data if exists
+            if (Object.keys(perPerson).length > 0) {
+                updateShiftDetailsInDashboard();
+                applyFilterAndRender();
+            }
+            
+            showNotification(`Shift ${shiftId ? 'updated' : 'added'} successfully!`);
+        }
+
+        /**
+         * Delete shift
+         */
+        function deleteShift(shiftCode) {
+            if (Object.keys(shiftConfig).length <= 1) {
+                alert('You must have at least one shift configuration.');
+                return;
+            }
+            
+            // Check if any employee is using this shift
+            const employeesUsingShift = employeeDatabase.filter(emp => emp.shift === shiftCode);
+            if (employeesUsingShift.length > 0) {
+                if (!confirm(`${employeesUsingShift.length} employee(s) are using this shift. They will be moved to Morning shift. Delete anyway?`)) {
+                    return;
+                }
+                
+                // Move employees to Morning shift
+                employeeDatabase.forEach(emp => {
+                    if (emp.shift === shiftCode) {
+                        emp.shift = 'Morning';
+                    }
+                });
+                saveEmployeeDatabase();
+                renderEmployeeDatabase();
+            }
+            
+            if (confirm(`Are you sure you want to delete the "${shiftConfig[shiftCode].name}" shift?`)) {
+                delete shiftConfig[shiftCode];
+                saveShiftConfig();
+                renderShiftCards();
+                updateShiftFilter();
+                updateEmployeeShiftDropdown();
+                
+                // Update attendance data if exists
+                if (Object.keys(perPerson).length > 0) {
+                    updateShiftDetailsInDashboard();
+                    applyFilterAndRender();
+                }
+                
+                showNotification('Shift deleted successfully!');
+            }
+        }
+
+        /**
+         * Reset shifts to default
+         */
+        function resetShiftsToDefault() {
+            if (confirm('Are you sure you want to reset all shifts to default? This cannot be undone.')) {
+                shiftConfig = {
+                    Morning: {
+                        name: 'Morning Shift',
+                        code: 'Morning',
+                        start: '08:46',
+                        end: '14:57',
+                        lateAfter: '08:46',
+                        earlyBefore: '14:57',
+                        fridayEarlyBefore: '12:27',
+                        isFridaySpecial: true,
+                        color: '#1565c0'
+                    },
+                    afternoon: {
+                        name: 'Afternoon Shift',
+                        code: 'afternoon',
+                        start: '12:00',
+                        end: '20:00',
+                        lateAfter: '12:00',
+                        earlyBefore: '20:00',
+                        fridayEarlyBefore: '20:00',
+                        isFridaySpecial: false,
+                        color: '#ef6c00'
+                    },
+                    night: {
+                        name: 'Night Shift',
+                        code: 'night',
+                        start: '20:00',
+                        end: '08:00',
+                        lateAfter: '20:00',
+                        earlyBefore: '08:00',
+                        fridayEarlyBefore: '08:00',
+                        isFridaySpecial: false,
+                        color: '#7b1fa2'
+                    }
+                };
+                
+                saveShiftConfig();
+                renderShiftCards();
+                updateShiftFilter();
+                updateEmployeeShiftDropdown();
+                
+                // Update attendance data if exists
+                if (Object.keys(perPerson).length > 0) {
+                    updateShiftDetailsInDashboard();
+                    applyFilterAndRender();
+                }
+                
+                showNotification('Shifts reset to default successfully!');
+            }
+        }
+
+        // ================================================
+        // EXCEL IMPORT/EXPORT FUNCTIONS
+        // ================================================
+
+        /**
+         * Setup Excel handlers
+         */
+        function setupExcelHandlers() {
+            const downloadBtn = document.getElementById('downloadTemplateBtn');
+            const excelFile = document.getElementById('excelFile');
+
+            downloadBtn.addEventListener('click', downloadExcelTemplate);
+            excelFile.addEventListener('change', handleExcelImport);
+        }
+
+        /**
+         * Download Excel Template
+         */
+        function downloadExcelTemplate() {
+            // Create template data with enhanced validation
+            const shiftOptions = Object.keys(shiftConfig).map(code => shiftConfig[code].name).join(', ');
+            
+            const templateData = [
+                ['Employee ID*', 'Employee Name*', 'Designation*', 'Posting Office*', 'Contact Number*', 'Shift', 'Email'],
+                ['EMP001', 'Dr. Nargis Lashari', 'Medical Officer', 'RHC Gambat', '03001234567', 'Morning', 'nargis@example.com'],
+                ['EMP002', 'Dr. Ali Ahmed', 'Dental Surgeon', 'BHU Sultanabad', '03119876543', 'Morning', 'ali@example.com'],
+                ['EMP003', 'Dr. Sara Khan', 'Women Medical Officer', 'RHC Khipro', '03211234567', 'afternoon', 'sara@example.com'],
+                ['NOTES:', '', '', '', '', '', ''],
+                ['* Required fields', '', '', '', '', '', ''],
+                ['Employee ID: Unique identifier for each employee', '', '', '', '', '', ''],
+                ['Contact Number: Must be unique, 10-12 digits', '', '', '', '', '', ''],
+                ['Shift options:', shiftOptions, '', '', '', '', ''],
+                ['Save as Excel file (.xlsx)', '', '', '', '', '', '']
+            ];
+
+            // Create workbook
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.aoa_to_sheet(templateData);
+
+            // Set column widths
+            const colWidths = [
+                { wch: 15 }, // Employee ID
+                { wch: 25 }, // Employee Name
+                { wch: 20 }, // Designation
+                { wch: 20 }, // Posting Office
+                { wch: 15 }, // Contact Number
+                { wch: 15 }, // Shift
+                { wch: 25 }  // Email
+            ];
+            ws['!cols'] = colWidths;
+
+            // Add worksheet to workbook
+            XLSX.utils.book_append_sheet(wb, ws, 'Employee Template');
+
+            // Download file
+            XLSX.writeFile(wb, 'Employee_Database_Template.xlsx');
+            showNotification('Excel template downloaded successfully!');
+        }
+
+        /**
+         * Handle Excel Import with duplicate prevention
+         */
+        function handleExcelImport(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    
+                    // Get first worksheet
+                    const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+                    const importResults = {
+                        success: 0,
+                        updated: 0,
+                        skipped: 0,
+                        errors: []
+                    };
+
+                    for (let i = 1; i < jsonData.length; i++) {
+                        const row = jsonData[i];
+                        if (!row || row.length < 5) continue;
+
+                        try {
+                            const employeeId = (row[0] || '').toString().trim();
+                            const name = (row[1] || '').toString().trim();
+                            const designation = (row[2] || '').toString().trim();
+                            const posting = (row[3] || '').toString().trim();
+                            let contact = (row[4] || '').toString().trim();
+                            let shiftInput = (row[5] || 'Morning').toString().trim();
+                            const email = (row[6] || '').toString().trim();
+
+                            // Validate required fields
+                            if (!name || !designation || !posting || !contact) {
+                                importResults.skipped++;
+                                importResults.errors.push(`Row ${i+1}: Missing required fields`);
+                                continue;
+                            }
+
+                            // Normalize contact
+                            contact = normalizePhone(contact);
+                            if (contact.length < 7) {
+                                importResults.skipped++;
+                                importResults.errors.push(`Row ${i+1}: Invalid contact number`);
+                                continue;
+                            }
+
+                            // Find shift
+                            let shift = 'Morning';
+                            const shiftLower = shiftInput.toLowerCase();
+                            
+                            if (shiftConfig[shiftLower]) {
+                                shift = shiftLower;
+                            } else {
+                                for (const shiftCode in shiftConfig) {
+                                    if (shiftConfig[shiftCode].name.toLowerCase() === shiftLower) {
+                                        shift = shiftCode;
+                                        break;
+                                    }
+                                }
+                            }
+
+                            // Prepare employee data
+                            const employeeData = {
+                                id: employeeId || generateEmployeeId({ name, contact, designation }),
+                                name,
+                                designation,
+                                posting,
+                                contact,
+                                shift,
+                                email
+                            };
+
+                            // Add or update employee
+                            const result = addOrUpdateEmployee(employeeData);
+                            
+                            if (result.action === 'added') {
+                                importResults.success++;
+                            } else if (result.action === 'updated') {
+                                importResults.updated++;
+                            }
+
+                        } catch (error) {
+                            importResults.skipped++;
+                            importResults.errors.push(`Row ${i+1}: ${error.message}`);
+                        }
+                    }
+
+                    // Update UI
+                    renderEmployeeDatabase();
+                    renderEmployeeShiftsTable();
+
+                    // Clear file input
+                    event.target.value = '';
+
+                    // Show results
+                    let message = `Import complete: ${importResults.success} added, ${importResults.updated} updated, ${importResults.skipped} skipped.`;
+                    if (importResults.errors.length > 0) {
+                        message += ` Errors: ${importResults.errors.slice(0, 3).join('; ')}`;
+                        if (importResults.errors.length > 3) {
+                            message += `... and ${importResults.errors.length - 3} more`;
+                        }
+                    }
+                    
+                    showNotification(message);
+
+                    // Auto-sync with attendance if data exists
+                    if (Object.keys(perPerson).length > 0) {
+                        setTimeout(() => {
+                            forceSyncWithDatabase();
+                        }, 1000);
+                    }
+
+                } catch (error) {
+                    console.error('Error importing Excel:', error);
+                    showNotification('Error importing Excel file. Please check the format.', 'error');
+                    event.target.value = '';
+                }
+            };
+
+            reader.onerror = function() {
+                showNotification('Error reading Excel file.', 'error');
+                event.target.value = '';
+            };
+
+            reader.readAsArrayBuffer(file);
+        }
+
+        /**
+         * Export Excel grouped by date
+         */
         function exportExcelGrouped() {
             if (Object.keys(perPerson).length === 0) {
                 alert('No data to export. Please process a WhatsApp file first.');
@@ -4834,7 +5287,134 @@
             XLSX.writeFile(wb, 'Attendance_Grouped_By_Date.xlsx');
         }
 
-        // PDF Report Functions - FIXED DOWNLOAD ISSUE
+        // ================================================
+        // NOTIFICATION AND UI UTILITIES
+        // ================================================
+
+        /**
+         * Show notification
+         */
+        function showNotification(message, type = 'success') {
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.className = `notification ${type === 'error' ? 'error' : ''}`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            // Animate in
+            setTimeout(() => {
+                notification.style.transform = 'translateX(0)';
+            }, 100);
+            
+            // Animate out and remove
+            setTimeout(() => {
+                notification.style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    if (document.body.contains(notification)) {
+                        document.body.removeChild(notification);
+                    }
+                }, 300);
+            }, 4000);
+        }
+
+        /**
+         * Delete all employees
+         */
+        function deleteAllEmployees() {
+            if (confirm('⚠️ ARE YOU SURE YOU WANT TO DELETE ALL EMPLOYEES?\n\nThis action cannot be undone. All employee data will be permanently deleted.')) {
+                employeeDatabase = [];
+                employeeIdentifiers.clear();
+                saveEmployeeDatabase();
+                renderEmployeeDatabase();
+                renderEmployeeShiftsTable();
+                
+                // Clear attendance data
+                perPerson = {};
+                filteredPerPerson = {};
+                
+                // Re-render dashboard
+                applyFilterAndRender();
+                
+                showNotification('All employees deleted successfully!');
+            }
+        }
+
+        // ================================================
+        // INITIALIZATION AND EVENT HANDLERS
+        // ================================================
+
+        /**
+         * Initialize on page load
+         */
+        window.addEventListener('load', function() {
+            window.scrollTo(0, 0);
+            
+            // Set default dates to today
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('startDate').value = today;
+            document.getElementById('endDate').value = today;
+            
+            // Load employee database
+            loadEmployeeDatabase();
+            
+            // Load shift configuration
+            loadShiftConfig();
+            
+            // Render initial views
+            renderEmployeeDatabase();
+            renderShiftCards();
+            updateShiftFilter();
+            updateEmployeeShiftDropdown();
+            
+            // Setup modal handlers
+            setupModalHandlers();
+            
+            // Setup Excel handlers
+            setupExcelHandlers();
+            
+            // Setup delete all button
+            document.getElementById('deleteAllEmployeesBtn').addEventListener('click', deleteAllEmployees);
+            
+            // Setup PDF handlers
+            setupPdfHandlers();
+            
+            // Setup shift management buttons
+            setupShiftHandlers();
+            
+            // Setup enhanced sync button
+            document.getElementById('syncEmployeesBtn').addEventListener('click', () => {
+                if (Object.keys(perPerson).length === 0) {
+                    alert('No attendance data available. Please process WhatsApp file first.');
+                    return;
+                }
+                
+                const result = forceSyncWithDatabase();
+                if (result.syncedCount > 0) {
+                    showNotification(`Successfully synced ${result.syncedCount} records with database.`);
+                }
+            });
+        });
+
+        /**
+         * Setup PDF handlers
+         */
+        function setupPdfHandlers() {
+            const pdfReportBtn = document.getElementById('pdfReportBtn');
+            const downloadPdfBtn = document.getElementById('downloadPdfBtn');
+            const printReportBtn = document.getElementById('printReportBtn');
+            const downloadPerformancePdf = document.getElementById('downloadPerformancePdf');
+            const printPerformanceBtn = document.getElementById('printPerformanceBtn');
+
+            pdfReportBtn.addEventListener('click', generatePdfReport);
+            downloadPdfBtn.addEventListener('click', downloadPdfReport);
+            printReportBtn.addEventListener('click', printReport);
+            downloadPerformancePdf.addEventListener('click', downloadPerformancePdfReport);
+            printPerformanceBtn.addEventListener('click', printPerformanceReport);
+        }
+
+        /**
+         * Generate PDF report
+         */
         function generatePdfReport() {
             if (Object.keys(filteredPerPerson).length === 0) {
                 alert('No data available to generate PDF report. Please process attendance data first.');
@@ -4850,7 +5430,9 @@
             document.getElementById('performanceReport').scrollIntoView({ behavior: 'smooth' });
         }
 
-        // FIXED: PDF Download Function
+        /**
+         * Download PDF report
+         */
         function downloadPdfReport() {
             if (Object.keys(filteredPerPerson).length === 0) {
                 alert('No data available to generate PDF report. Please process attendance data first.');
@@ -5002,6 +5584,9 @@
             });
         }
 
+        /**
+         * Get top performers HTML for PDF
+         */
         function getTopPerformersHtml() {
             const performers = [];
             
@@ -5060,6 +5645,9 @@
             return html;
         }
 
+        /**
+         * Download performance PDF report
+         */
         function downloadPerformancePdfReport() {
             // Switch to performance tab first
             document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
@@ -5111,6 +5699,9 @@
             }, 500);
         }
 
+        /**
+         * Print report
+         */
         function printReport() {
             const printContent = document.getElementById('performanceReport').innerHTML;
             const originalContent = document.body.innerHTML;
@@ -5153,6 +5744,9 @@
             `;
         }
 
+        /**
+         * Print performance report
+         */
         function printPerformanceReport() {
             // Switch to performance tab
             document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
@@ -5166,11 +5760,20 @@
             }, 500);
         }
 
+        /**
+         * Close PDF preview
+         */
         function closePdfPreview() {
             document.getElementById('pdfPreviewModal').style.display = 'none';
         }
 
-        // Main processing function - FIXED
+        // ================================================
+        // MAIN EVENT LISTENERS
+        // ================================================
+
+        /**
+         * Main processing function
+         */
         document.getElementById('processBtn').addEventListener('click', () => {
             const f = document.getElementById('chatFile').files[0];
             if (!f) return alert('Please upload a WhatsApp exported .txt file first.');
@@ -5182,10 +5785,9 @@
             reader.onload = e => {
                 try {
                     const fileContent = e.target.result;
-                    console.log('File content loaded, length:', fileContent.length);
                     
+                    // Parse messages
                     parsedMessages = parseWhatsAppText(fileContent);
-                    console.log('Parsed messages count:', parsedMessages.length);
                     
                     if (parsedMessages.length === 0) {
                         alert('No messages could be parsed from the file. Please check the file format.');
@@ -5196,28 +5798,37 @@
                     // Build attendance data
                     buildData(parsedMessages);
                     
-                    // default filteredPerPerson = all perPerson
+                    // Sync with database
+                    const syncResult = syncAttendanceWithDatabase();
+                    
+                    // Set filtered data to all data
                     filteredPerPerson = {};
-                    for (const p in perPerson) filteredPerPerson[p] = { details: perPerson[p].details, dates: { ...perPerson[p].dates } };
+                    for (const p in perPerson) {
+                        filteredPerPerson[p] = { 
+                            details: { ...perPerson[p].details }, 
+                            dates: { ...perPerson[p].dates } 
+                        };
+                    }
+                    
                     document.getElementById('generationDate').innerText = new Date().toLocaleString();
                     
-                    // initial render: no filters
+                    // Initial render
                     applyFilterAndRender();
                     
                     // Hide loading indicator
                     document.getElementById('loadingIndicator').style.display = 'none';
                     
-                    // Scroll to top after processing
+                    // Scroll to top
                     window.scrollTo({
                         top: 0,
                         behavior: 'smooth'
                     });
                     
-                    showNotification(`Successfully processed ${parsedMessages.length} messages and found ${Object.keys(perPerson).length} unique people.`);
+                    showNotification(`Successfully processed ${parsedMessages.length} messages and found ${Object.keys(perPerson).length} unique people. Synced ${syncResult.syncedCount} with database.`);
+                    
                 } catch (err) {
                     console.error('Error processing file:', err);
                     alert('Error processing file: ' + err.message);
-                    // Hide loading indicator
                     document.getElementById('loadingIndicator').style.display = 'none';
                 }
             };
@@ -5230,7 +5841,10 @@
             reader.readAsText(f, 'UTF-8');
         });
 
+        // Apply filter button
         document.getElementById('applyBtn').addEventListener('click', applyFilterAndRender);
+
+        // Export Excel button
         document.getElementById('exportBtn').addEventListener('click', exportExcelGrouped);
 
         // Tabs functionality
@@ -5243,7 +5857,48 @@
                 document.getElementById(tab).style.display = 'block';
             });
         });
+
+        // Chart toggle functionality
+        document.getElementById('toggleStackedChart').addEventListener('click', function() {
+            chartVisibility.stacked = !chartVisibility.stacked;
+            const icon = this.querySelector('i');
+            icon.className = chartVisibility.stacked ? 'fas fa-eye' : 'fas fa-eye-slash';
+            drawCharts();
+        });
+
+        document.getElementById('toggleTrendChart').addEventListener('click', function() {
+            chartVisibility.trend = !chartVisibility.trend;
+            const icon = this.querySelector('i');
+            icon.className = chartVisibility.trend ? 'fas fa-eye' : 'fas fa-eye-slash';
+            drawCharts();
+        });
+
+        // Card click filtering
+        document.querySelectorAll('.card[data-filter]').forEach(card => {
+            card.addEventListener('click', function() {
+                document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
+                this.classList.add('active');
+                activeFilter = this.getAttribute('data-filter');
+                drawCharts();
+            });
+        });
+
+        // Scroll to top button
+        const scrollTopBtn = document.getElementById('scrollTopBtn');
+        window.addEventListener('scroll', function() {
+            if (window.pageYOffset > 300) {
+                scrollTopBtn.classList.add('visible');
+            } else {
+                scrollTopBtn.classList.remove('visible');
+            }
+        });
+
+        scrollTopBtn.addEventListener('click', function() {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
     </script>
 </body>
 </html>
-
